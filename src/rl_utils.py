@@ -12,10 +12,6 @@ import matplotlib.pyplot as plt
 import warnings
 from tqdm import tqdm
 
-from stable_baselines3.common.vec_env import VecNormalize, DummyVecEnv, SubprocVecEnv
-from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.callbacks import EvalCallback
-
 from src.rl_opt import calculate_optimum
 
 def import_market_data(csvfile: str, type: str, path: str):
@@ -532,10 +528,8 @@ class Postprocessing():
 
         for i in tqdm(range(timesteps), desc='---Apply MCTS planning on the test environment:'):
 
-
             
-
-
+            
 
             action, _ = self.model.predict(obs, deterministic=True)
             obs, _ , terminated, info = self.env_test_post.step(action)
