@@ -1,12 +1,9 @@
 # ----------------------------------------------------------------------------------------------------------------
-# RL_PtG: Deep Reinforcement Learning for Power-to-Gas dispatch optimization
-# https://github.com/SimMarkt/RL_PtG
-
-# config_agent: 
-# > Configuration file for the RL agent in the PtG-CH4 environment
-# > RL_PtG incorporates the Stable-Baselines3 and SB3 Contrib libraries. For more information, refer to:
-#       Stable-Baselines3 : https://stable-baselines3.readthedocs.io/en/master/guide/algos.html
-#       SB3 Contrib: https://sb3-contrib.readthedocs.io/en/master/
+# RL_PtG: Power-to-Gas Dispatch Optimization using Monte Carlo Tree Search (MCTS)
+# GitHub Repository: https://github.com/SimMarkt/MCTS_PtG
+#
+# config_mcts: 
+# > Configuration file for the MTCS in the PtG-CH4 environment
 # ----------------------------------------------------------------------------------------------------------------
 
 n_envs : 6                   # No. of environment instances/workers for training

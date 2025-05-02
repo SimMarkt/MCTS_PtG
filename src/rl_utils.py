@@ -12,10 +12,6 @@ import matplotlib.pyplot as plt
 import warnings
 from tqdm import tqdm
 
-from stable_baselines3.common.vec_env import VecNormalize, DummyVecEnv, SubprocVecEnv
-from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.callbacks import EvalCallback
-
 from src.rl_opt import calculate_optimum
 
 def import_market_data(csvfile: str, type: str, path: str):
@@ -442,63 +438,7 @@ def config_print(AgentConfig, EnvConfig, TrainConfig):
     str_id += AgentConfig.get_hyper()
     str_id += "_rs" + str(TrainConfig.seed_train)                       # Random seed at the end of "str_id" for file simplified file
 
-    return str_id
-
-
-def _make_env(env_id, n_envs, seed, env_kwargs, vec_env_cls=DummyVecEnv):
-    """Helper function to create and normalized environments"""
-
-    env = make_vec_env(env_id=env_id, n_envs=n_envs, seed=seed, vec_env_cls=vec_env_cls, env_kwargs=env_kwargs)
-
-    return VecNormalize(env, norm_obs=False)
-
-def eval_callback_dec(env_fn):
-    """Decorator to create an evaluation environment and its EvalCallback"""
-
-    def wrapper(env_id, str_id, TrainConfig, AgentConfig, env_kwargs, suffix, render_mode="None", n_envs=None):
-        """Wrapper function to create evaluation environment and callback"""
-        # Default n_envs to TrainConfig.eval_trials if not provided
-        n_envs = n_envs if n_envs is not None else TrainConfig.eval_trials  
-
-        env = env_fn(env_id, n_envs, TrainConfig.seed_test, env_kwargs, render_mode)
-        callback = EvalCallback(env,
-                                best_model_save_path=f"{TrainConfig.path}/logs/{str_id}_{suffix}/",
-                                n_eval_episodes=TrainConfig.eval_trials,
-                                log_path=f"{TrainConfig.path}/logs/",
-                                eval_freq=int(TrainConfig.test_steps / AgentConfig.n_envs),
-                                deterministic=True, render=False, verbose=0)
-        return env, callback
-    return wrapper
-
-@eval_callback_dec
-def _make_eval_env(env_id, n_envs, seed, env_kwargs, render_mode="None"):
-    """Creates an evaluation environment"""
-
-    return _make_env(env_id, n_envs, seed, 
-                     dict(dict_input=env_kwargs, train_or_eval="eval", render_mode=render_mode))
-
-def create_vec_envs(env_id, str_id, AgentConfig, TrainConfig, env_kwargs_data):
-    """Creates vectorized environments for training, validation, and testing"""
-
-    # Set processing type
-    if TrainConfig.parallel == "Singleprocessing":  vec_env_cls = DummyVecEnv   # DummyVecEnv -> computes each workers interaction in serial, if calculating the env itself is quite fast
-    elif TrainConfig.parallel == "Multiprocessing": vec_env_cls = SubprocVecEnv # SubprocVecEnv for multiprocessing -> computes each workers interaction in parallel, if calculating the env itself is quite slow 
-    else: assert False, 'Choose either "Singleprocessing" or "Multiprocessing" in RL_PTG/config/config_train.yaml -> parallel!'
-
-    # Create training environment
-    env_train = _make_env(env_id, AgentConfig.n_envs, TrainConfig.seed_train, 
-                          dict(dict_input=env_kwargs_data['env_kwargs_train'], 
-                               train_or_eval=TrainConfig.train_or_eval, render_mode="None"), vec_env_cls)
-
-    # Create callbacks for validation and test
-    _, eval_callback_val = _make_eval_env(env_id, str_id, TrainConfig, AgentConfig, env_kwargs_data['env_kwargs_val'], "val")
-    _, eval_callback_test = _make_eval_env(env_id, str_id, TrainConfig, AgentConfig, env_kwargs_data['env_kwargs_test'], "test")
-    
-    # Create second test environment with only one instance of the environment for postprocessing
-    env_test_post, _ = _make_eval_env(env_id, str_id, TrainConfig, AgentConfig, env_kwargs_data['env_kwargs_test'], "test_post", n_envs=1)
-
-    return env_train, env_test_post, eval_callback_val, eval_callback_test
-    
+    return str_id  
        
 class Postprocessing():
     """A class for post-processing"""
@@ -532,10 +472,8 @@ class Postprocessing():
 
         for i in tqdm(range(timesteps), desc='---Apply MCTS planning on the test environment:'):
 
-
             
-
-
+            
 
             action, _ = self.model.predict(obs, deterministic=True)
             obs, _ , terminated, info = self.env_test_post.step(action)

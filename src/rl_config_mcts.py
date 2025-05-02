@@ -2,9 +2,9 @@
 # RL_PtG: Deep Reinforcement Learning for Power-to-Gas Dispatch Optimization
 # GitHub Repository: https://github.com/SimMarkt/RL_PtG
 #
-# rl_config_agent:
+# rl_config_mcts:
 # > Stores hyperparameters for the RL agents
-# > Parses the config_agent.yaml data into a class object for further processing
+# > Parses the config_mcts.yaml data into a class object for further processing
 # > Includes three additional functions to specify, load, and save Stable-Baselines3 models
 # -------------------------------------------------------------------------------------------
 
@@ -15,18 +15,18 @@ import yaml
 class AgentConfiguration:
     def __init__(self):
         # Load the environment configuration from the YAML file
-        with open("config/config_agent.yaml", "r") as env_file:
+        with open("config/config_mcts.yaml", "r") as env_file:
             agent_config = yaml.safe_load(env_file)
 
         # Unpack data from dictionary
         self.__dict__.update(agent_config)
 
         # Ensure the specified RL algorithm exists in the hyperparameters
-        assert self.rl_alg in self.hyperparameters, f"Invalid algorithm specified - data/config_agent.yaml -> model_conf : {self.rl_alg} must match {self.hyperparameters.keys()}"
+        assert self.rl_alg in self.hyperparameters, f"Invalid algorithm specified - data/config_mcts.yaml -> model_conf : {self.rl_alg} must match {self.hyperparameters.keys()}"
         self.rl_alg_hyp = self.hyperparameters[self.rl_alg]      # Hyperparameters of the selected algorithm
         self.str_alg = None                                      # Initialize the string for the algorithm settings (used for file identification)
         # Nested dictionary with hyperparameters, including abbreviation ('abb') and variable name ('var') 
-        # 'var' must match the notation in RL_PtG/config/config_agent.yaml
+        # 'var' must match the notation in RL_PtG/config/config_mcts.yaml
         self.hyper = {'Learning rate': {'abb' :"_al", 'var': 'alpha'},
                       'Discount factor': {'abb' :"_ga", 'var': 'gamma'},
                       'Initial exploration coefficient': {'abb' :"_ie", 'var': 'eps_init'},
@@ -72,7 +72,7 @@ class AgentConfiguration:
         elif self.rl_alg_hyp['activation'] == 'Tanh':
             activation_fn = th.nn.Tanh
         else:
-            assert False, f"Type of activation function ({self.rl_alg_hyp['activation']}) needs to be 'ReLU' or 'Tanh'! -> Check RL_PtG/config/config_agent.yaml"
+            assert False, f"Type of activation function ({self.rl_alg_hyp['activation']}) needs to be 'ReLU' or 'Tanh'! -> Check RL_PtG/config/config_mcts.yaml"
         net_arch = np.ones((self.rl_alg_hyp['hidden_layers'],), int) * self.rl_alg_hyp['hidden_units']
         net_arch = net_arch.tolist()
 
@@ -104,8 +104,8 @@ class AgentConfiguration:
         elif self.rl_alg == 'A2C':                      
             from stable_baselines3 import A2C
             policy_kwargs = dict(activation_fn=activation_fn, net_arch=net_arch)
-            assert self.rl_alg_hyp['normalize_advantage'] in [False,True], f"Normalize advantage ({self.rl_alg_hyp['normalize_advantage']}) should be 'False' or 'True'! - Check RL_PtG/config/config_agent.yaml"
-            assert self.rl_alg_hyp['gSDE'] in [False,True], f"gSDE exploration ({self.rl_alg_hyp['gSDE']}) should be 'False' or 'True'! - Check RL_PtG/config/config_agent.yaml"
+            assert self.rl_alg_hyp['normalize_advantage'] in [False,True], f"Normalize advantage ({self.rl_alg_hyp['normalize_advantage']}) should be 'False' or 'True'! - Check RL_PtG/config/config_mcts.yaml"
+            assert self.rl_alg_hyp['gSDE'] in [False,True], f"gSDE exploration ({self.rl_alg_hyp['gSDE']}) should be 'False' or 'True'! - Check RL_PtG/config/config_mcts.yaml"
             model = A2C(
                 "MultiInputPolicy",                                                     # Policy type
                 env,                                                                    # Environment
@@ -127,8 +127,8 @@ class AgentConfiguration:
             from stable_baselines3 import PPO
             policy_kwargs = dict(activation_fn=activation_fn, net_arch=net_arch)
             n_steps = int(self.rl_alg_hyp['n_steps_f'] * self.rl_alg_hyp['batch_size'])       # No. of steps of the n-step TD update
-            assert self.rl_alg_hyp['normalize_advantage'] in [False,True], f"Normalize advantage ({self.rl_alg_hyp['normalize_advantage']}) should be 'False' or 'True'! - Check RL_PtG/config/config_agent.yaml"
-            assert self.rl_alg_hyp['gSDE'] in [False,True], f"gSDE exploration ({self.rl_alg_hyp['gSDE']}) should be 'False' or 'True'! - Check RL_PtG/config/config_agent.yaml"
+            assert self.rl_alg_hyp['normalize_advantage'] in [False,True], f"Normalize advantage ({self.rl_alg_hyp['normalize_advantage']}) should be 'False' or 'True'! - Check RL_PtG/config/config_mcts.yaml"
+            assert self.rl_alg_hyp['gSDE'] in [False,True], f"gSDE exploration ({self.rl_alg_hyp['gSDE']}) should be 'False' or 'True'! - Check RL_PtG/config/config_mcts.yaml"
             model = PPO(
                 "MultiInputPolicy",                                                     # Policy type
                 env,                                                                    # Environment
@@ -172,7 +172,7 @@ class AgentConfiguration:
         elif self.rl_alg == 'SAC':                    
             from stable_baselines3 import SAC
             policy_kwargs = dict(activation_fn=activation_fn, net_arch=net_arch)
-            assert self.rl_alg_hyp['gSDE'] in [False,True], f"gSDE exploration ({self.rl_alg_hyp['gSDE']}) should be 'False' or 'True'! - Check RL_PtG/config/config_agent.yaml"
+            assert self.rl_alg_hyp['gSDE'] in [False,True], f"gSDE exploration ({self.rl_alg_hyp['gSDE']}) should be 'False' or 'True'! - Check RL_PtG/config/config_mcts.yaml"
             model = SAC(
                 "MultiInputPolicy",                                                     # Policy type
                 env,                                                                    # Environment
@@ -197,7 +197,7 @@ class AgentConfiguration:
             from sb3_contrib import TQC
             policy_kwargs = dict(activation_fn=activation_fn, net_arch=net_arch,
                             n_critics=int(self.rl_alg_hyp['n_critics']), n_quantiles=int(self.rl_alg_hyp['n_quantiles']))
-            assert self.rl_alg_hyp['gSDE'] in [False,True], f"gSDE exploration ({self.rl_alg_hyp['gSDE']}) should be 'False' or 'True'! - Check RL_PtG/config/config_agent.yaml"
+            assert self.rl_alg_hyp['gSDE'] in [False,True], f"gSDE exploration ({self.rl_alg_hyp['gSDE']}) should be 'False' or 'True'! - Check RL_PtG/config/config_mcts.yaml"
             model = TQC(
                 "MultiInputPolicy",                                                         # Policy type
                 env,                                                                        # Environment
