@@ -47,10 +47,29 @@ class MCTSNode:
         return self.done
 
     def is_fully_expanded(self):
-        legal_actions = list(range(self.env.action_space.n))
+        legal_actions = self.get_legal_actions()
         tried_actions = [child.action for child in self.children]
         return set(tried_actions) == set(legal_actions)
-
+    
+    def get_legal_actions(self):
+        """
+        Dynamically determine the legal actions based on the Meth_State.
+        :return: A list of legal actions.
+        """
+        meth_state = self.env.Meth_State  # Access the Meth_State from the environment
+        if meth_state == 0:     # 'standby'
+            return [0, 1, 2]    # Allows only standby, cooldown, and startup actions
+        elif meth_state == 1:   # 'cooldown'
+            return [0, 1, 2]    # Allows only standby, cooldown, and startup actions
+        elif meth_state == 2:   # 'startup'
+            return [0, 1, 3, 4] # Allows only standby, cooldown, and load level after startup (partial load, full load)
+        elif meth_state == 3:   # 'partial load'
+            return [0, 1, 3, 4] # Allows only standby, cooldown, and load level (partial load, full load)
+        elif meth_state == 4:   # 'full load'
+            return [0, 1, 3, 4] # Allows only standby, cooldown, and load level (partial load, full load)
+        else:
+            return list(range(self.env.action_space.n))  # Default to all actions
+        
     def best_child(self, c_param=1.41):
         choices_weights = [
             (child.total_reward / child.visits) + 
@@ -86,7 +105,7 @@ class MCTS:
         return node
 
     def _expand(self, node):
-        legal_actions = list(range(node.env.action_space.n))
+        legal_actions = node.get_legal_actions()
         tried_actions = [child.action for child in node.children]
         untried_actions = [a for a in legal_actions if a not in tried_actions]
 
@@ -172,8 +191,8 @@ def main():
     MCTSConfig = AgentConfiguration()
     EnvConfig = EnvConfiguration()
 
-    iterations=50
-    EnvConfig.scenario = 3
+    iterations=200
+    EnvConfig.scenario = 2
 
     TrainConfig = TrainConfiguration()
     computational_resources(TrainConfig)
