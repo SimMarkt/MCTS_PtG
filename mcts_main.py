@@ -282,8 +282,8 @@ def plot_results(stats_dict_test, EnvConfig):
         axs2_1.set_ylabel('Cumulative \n reward [€]')
         axs2_1.legend(loc="upper right", fontsize='small')
 
-        fig.suptitle(f"{self.str_id} \n Rew: {np.round(stats_dict['Meth_cum_reward_stats'][-7]/100, 0)} €", fontsize=9)
-        plt.savefig(f'plots/{self.str_id}_plot.png')
+        fig.suptitle(f"MCTS_100iterations \n Rew: {np.round(stats_dict['Meth_cum_reward_stats'][-7]/100, 0)} €", fontsize=9)
+        plt.savefig(f'plots/MCTS_100iterations_plot.png')
 
         plt.close()
 
