@@ -36,15 +36,15 @@ raw_modified : mod              # State design type: 'raw' (using raw energy mar
 # _el: electricity spot market data in [h]
 datafile_path_train_el : /data/spot_market_data/data-day-ahead-el-train.csv
 datafile_path_val_el : /data/spot_market_data/data-day-ahead-el-val.csv
-datafile_path_test_el : /data/spot_market_data/data-day-ahead-el-test.csv
+datafile_path_test_el : /data/spot_market_data/data-day-ahead-el-test_separate.csv
 # _gas: natural gas/SNG spot market data in [d]
 datafile_path_train_gas : /data/spot_market_data/data-day-ahead-gas-train.csv
 datafile_path_val_gas : /data/spot_market_data/data-day-ahead-gas-val.csv
-datafile_path_test_gas : /data/spot_market_data/data-day-ahead-gas-test.csv
+datafile_path_test_gas : /data/spot_market_data/data-day-ahead-gas-test_separate.csv
 # _eua: European emission allowances (EUA) spot market data in [d]
 datafile_path_train_eua : /data/spot_market_data/data-day-ahead-eua-train.csv
 datafile_path_val_eua : /data/spot_market_data/data-day-ahead-eua-val.csv
-datafile_path_test_eua : /data/spot_market_data/data-day-ahead-eua-test.csv
+datafile_path_test_eua : /data/spot_market_data/data-day-ahead-eua-test_separate.csv
 
 # File paths to process data for the dynamic data-based process model of the methanation plant:
 # Process data w.r.t. the load levels OP1 and OP2
