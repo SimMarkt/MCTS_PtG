@@ -30,6 +30,8 @@ import copy
 
 import matplotlib.pyplot as plt
 
+import argparse
+
 class MCTSNode:
     def __init__(self, env, parent=None, action=None, done=False, remaining_steps=72):
         self.env = env  # deepcopy of the env
@@ -169,6 +171,10 @@ def main():
     initial_print()
     MCTSConfig = AgentConfiguration()
     EnvConfig = EnvConfiguration()
+
+    iterations=50
+    EnvConfig.scenario = 3
+
     TrainConfig = TrainConfiguration()
     computational_resources(TrainConfig)
     str_id = config_print(MCTSConfig, EnvConfig, TrainConfig)
@@ -194,7 +200,7 @@ def main():
     print("Run MCTS on the validation set... >>>", str_id, "<<< \n")
     env_test_post = gym.make(env_id, dict_input = env_kwargs_data['env_kwargs_test'], train_or_eval = "eval")
 
-    mcts = MCTS(exploration_weight=1.41, iterations=500)
+    mcts = MCTS(exploration_weight=1.41, iterations=iterations)
 
     obs = env_test_post.reset()
     timesteps = Preprocess.eps_sim_steps_test
@@ -205,7 +211,7 @@ def main():
 
         action = mcts.search(env_test_post,i)  # Perform MCTS search to get the best action
         obs, _ , _ , terminated, info = env_test_post.step(action)
-        print(info["Pot_Reward"], info["reward [ct]"], action)
+        print(f' Pot_Rew {info["Pot_Reward"]}, Load_Id {info["Part_Full"]}, Meth_State {info["Meth_State"]}, Rew {info["reward [ct]"]}, Action {action}')
 
         # Store data in stats
         if not terminated:
@@ -240,9 +246,9 @@ def main():
     # PostProcess.test_performance()
     # PostProcess.plot_results()
 
-    plot_results(stats_dict_test, EnvConfig)
+    plot_results(stats_dict_test, EnvConfig, iterations)
 
-def plot_results(stats_dict_test, EnvConfig):
+def plot_results(stats_dict_test, EnvConfig, iterations):
         """Generates a multi-subplot plot displaying time-series data and methanation operations based on the agent's actions"""
         print("---Plot and save RL performance on the test set under ./plots/ ...\n") 
 
@@ -282,8 +288,8 @@ def plot_results(stats_dict_test, EnvConfig):
         axs2_1.set_ylabel('Cumulative \n reward [€]')
         axs2_1.legend(loc="upper right", fontsize='small')
 
-        fig.suptitle(f"MCTS_100iterations \n Rew: {np.round(stats_dict['Meth_cum_reward_stats'][-7]/100, 0)} €", fontsize=9)
-        plt.savefig(f'plots/MCTS_100iterations_plot.png')
+        fig.suptitle(f"MCTS_S{EnvConfig.scenario}_Iter{iterations} \n Rew: {np.round(stats_dict['Meth_cum_reward_stats'][-7]/100, 0)} €", fontsize=9)
+        plt.savefig(f'plots/MCTS_S{EnvConfig.scenario}_Iter{iterations}_plot.png')
 
         plt.close()
 
