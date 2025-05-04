@@ -30,6 +30,8 @@ import copy
 
 import matplotlib.pyplot as plt
 
+import argparse
+
 class MCTSNode:
     def __init__(self, env, parent=None, action=None, done=False, remaining_steps=72):
         self.env = env  # deepcopy of the env
@@ -45,10 +47,29 @@ class MCTSNode:
         return self.done
 
     def is_fully_expanded(self):
-        legal_actions = list(range(self.env.action_space.n))
+        legal_actions = self.get_legal_actions()
         tried_actions = [child.action for child in self.children]
         return set(tried_actions) == set(legal_actions)
-
+    
+    def get_legal_actions(self):
+        """
+        Dynamically determine the legal actions based on the Meth_State.
+        :return: A list of legal actions.
+        """
+        meth_state = self.env.Meth_State  # Access the Meth_State from the environment
+        if meth_state == 0:     # 'standby'
+            return [0, 1, 2]    # Allows only standby, cooldown, and startup actions
+        elif meth_state == 1:   # 'cooldown'
+            return [0, 1, 2]    # Allows only standby, cooldown, and startup actions
+        elif meth_state == 2:   # 'startup'
+            return [0, 1, 3, 4] # Allows only standby, cooldown, and load level after startup (partial load, full load)
+        elif meth_state == 3:   # 'partial load'
+            return [0, 1, 3, 4] # Allows only standby, cooldown, and load level (partial load, full load)
+        elif meth_state == 4:   # 'full load'
+            return [0, 1, 3, 4] # Allows only standby, cooldown, and load level (partial load, full load)
+        else:
+            return list(range(self.env.action_space.n))  # Default to all actions
+        
     def best_child(self, c_param=1.41):
         choices_weights = [
             (child.total_reward / child.visits) + 
@@ -84,7 +105,7 @@ class MCTS:
         return node
 
     def _expand(self, node):
-        legal_actions = list(range(node.env.action_space.n))
+        legal_actions = node.get_legal_actions()
         tried_actions = [child.action for child in node.children]
         untried_actions = [a for a in legal_actions if a not in tried_actions]
 
@@ -169,6 +190,10 @@ def main():
     initial_print()
     MCTSConfig = AgentConfiguration()
     EnvConfig = EnvConfiguration()
+
+    iterations=200
+    EnvConfig.scenario = 2
+
     TrainConfig = TrainConfiguration()
     computational_resources(TrainConfig)
     str_id = config_print(MCTSConfig, EnvConfig, TrainConfig)
@@ -194,7 +219,7 @@ def main():
     print("Run MCTS on the validation set... >>>", str_id, "<<< \n")
     env_test_post = gym.make(env_id, dict_input = env_kwargs_data['env_kwargs_test'], train_or_eval = "eval")
 
-    mcts = MCTS(exploration_weight=1.41, iterations=500)
+    mcts = MCTS(exploration_weight=1.41, iterations=iterations)
 
     obs = env_test_post.reset()
     timesteps = Preprocess.eps_sim_steps_test
@@ -205,7 +230,7 @@ def main():
 
         action = mcts.search(env_test_post,i)  # Perform MCTS search to get the best action
         obs, _ , _ , terminated, info = env_test_post.step(action)
-        print(info["Pot_Reward"], info["reward [ct]"], action)
+        print(f' Pot_Rew {info["Pot_Reward"]}, Load_Id {info["Part_Full"]}, Meth_State {info["Meth_State"]}, Rew {info["reward [ct]"]}, Action {action}')
 
         # Store data in stats
         if not terminated:
@@ -240,9 +265,9 @@ def main():
     # PostProcess.test_performance()
     # PostProcess.plot_results()
 
-    plot_results(stats_dict_test, EnvConfig)
+    plot_results(stats_dict_test, EnvConfig, iterations)
 
-def plot_results(stats_dict_test, EnvConfig):
+def plot_results(stats_dict_test, EnvConfig, iterations):
         """Generates a multi-subplot plot displaying time-series data and methanation operations based on the agent's actions"""
         print("---Plot and save RL performance on the test set under ./plots/ ...\n") 
 
@@ -282,8 +307,8 @@ def plot_results(stats_dict_test, EnvConfig):
         axs2_1.set_ylabel('Cumulative \n reward [€]')
         axs2_1.legend(loc="upper right", fontsize='small')
 
-        fig.suptitle(f"MCTS_100iterations \n Rew: {np.round(stats_dict['Meth_cum_reward_stats'][-7]/100, 0)} €", fontsize=9)
-        plt.savefig(f'plots/MCTS_100iterations_plot.png')
+        fig.suptitle(f"MCTS_S{EnvConfig.scenario}_Iter{iterations} \n Rew: {np.round(stats_dict['Meth_cum_reward_stats'][-7]/100, 0)} €", fontsize=9)
+        plt.savefig(f'plots/MCTS_S{EnvConfig.scenario}_Iter{iterations}_plot.png')
 
         plt.close()
 
