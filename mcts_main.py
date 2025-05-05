@@ -191,8 +191,10 @@ def main():
     MCTSConfig = AgentConfiguration()
     EnvConfig = EnvConfiguration()
 
-    iterations=200
-    EnvConfig.scenario = 2
+
+    iterations=500
+    EnvConfig.scenario = 1
+    exploration_weight = 1.41
 
     TrainConfig = TrainConfiguration()
     computational_resources(TrainConfig)
@@ -219,7 +221,7 @@ def main():
     print("Run MCTS on the validation set... >>>", str_id, "<<< \n")
     env_test_post = gym.make(env_id, dict_input = env_kwargs_data['env_kwargs_test'], train_or_eval = "eval")
 
-    mcts = MCTS(exploration_weight=1.41, iterations=iterations)
+    mcts = MCTS(exploration_weight=exploration_weight, iterations=iterations)
 
     obs = env_test_post.reset()
     timesteps = Preprocess.eps_sim_steps_test
