@@ -1,9 +1,9 @@
 python_version >= "3.10"
-matplotlib == 3.7.2
+matplotlib == 3.10.1
 gymnasium == 0.28.1
-pandas == 2.0.3
-tqdm == 4.65.1
-numpy == 1.25.2
+pandas == 2.2.3
+tqdm == 4.67.1
+numpy == 2.2.5
 rich == 13.5.2
-torch == 2.0.1
+torch == 2.7.0
 pyyaml == 6.0.2

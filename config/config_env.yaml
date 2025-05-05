@@ -1,6 +1,6 @@
 # ----------------------------------------------------------------------------------------------------------------
-# RL_PtG: Deep Reinforcement Learning for Power-to-Gas Dispatch Optimization
-# Reference: https://github.com/SimMarkt/RL_PtG
+# RL_PtG: Power-to-Gas Dispatch Optimization using Monte Carlo Tree Search (MCTS)
+# GitHub Repository: https://github.com/SimMarkt/MCTS_PtG
 
 # config_env: 
 # > Configuration file for the PtG environment, covering three distinct economic business scenarios:
@@ -26,24 +26,14 @@ operation : OP2                 # Load level: "OP1" or "OP2" for the PtG-CH4 pla
 price_ahead : 13                # Number of forecasted electricity price values for future data (0-12h)
 time_step_op : 2                # Time step between consecutive entries in the methanation operation data [s]
 noise : 10                      # Noise factor influencing state transitions in the methanation process [steps in the operation data]
-eps_len_d : 37                  # No. of days in an episode (episodes are randomly selected without replacement)
-state_change_penalty : 0.0      # Reward penalty during training for state changes (0.0 = no penalty, >0.0 = penalty for mode transitions)
 sim_step : 600                  # Frequency of taking actions [s]
-raw_modified : mod              # State design type: 'raw' (using raw energy market prices) or 'mod' (using modified economic metrics)
 
-# File paths to energy spot market data for training and evaluation:
-# (_train: training set; _val: validation set; _test: test set)
+# File paths to energy spot market data for evaluation:
 # _el: electricity spot market data in [h]
-datafile_path_train_el : /data/spot_market_data/data-day-ahead-el-train.csv
-datafile_path_val_el : /data/spot_market_data/data-day-ahead-el-val.csv
 datafile_path_test_el : /data/spot_market_data/data-day-ahead-el-test_separate.csv
 # _gas: natural gas/SNG spot market data in [d]
-datafile_path_train_gas : /data/spot_market_data/data-day-ahead-gas-train.csv
-datafile_path_val_gas : /data/spot_market_data/data-day-ahead-gas-val.csv
 datafile_path_test_gas : /data/spot_market_data/data-day-ahead-gas-test_separate.csv
 # _eua: European emission allowances (EUA) spot market data in [d]
-datafile_path_train_eua : /data/spot_market_data/data-day-ahead-eua-train.csv
-datafile_path_val_eua : /data/spot_market_data/data-day-ahead-eua-val.csv
 datafile_path_test_eua : /data/spot_market_data/data-day-ahead-eua-test_separate.csv
 
 # File paths to process data for the dynamic data-based process model of the methanation plant:
@@ -118,12 +108,6 @@ Molar_mass_CO2 : 44.01             # Molar mass of carbon dioxid [g/mol]
 Molar_mass_H2O : 18.02             # Molar mass of water [g/mol]
 min_load_electrolyzer : 0.032      # Minimum electrolyzer load (3.2%) based on PEMEL regression model
 eta_CHP : 0.38                     # Gas engine/CHP efficiency
-
-# Optional: Reward penalties for state transitions
-r_0_values :   # Reward penalty levels based on price levels of electricity, SNG, and EUA
-    el_price : [0]
-    gas_price : [10]
-    eua_price : [50]
 
 # Threshold values for methanation data
 t_cat_standby : 188.2              # Catalyst temperature threshold for switching to standby data set [°C]
