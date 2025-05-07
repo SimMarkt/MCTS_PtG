@@ -9,3 +9,5 @@
 
 iterations : 1000000            # No. of iterations for MCTS
 exploration_weight : 1.41       # Exploration parameter for UCT
+total_steps : 42                # No. of steps in the simulation rollouts
+maximum_depth : 42              # Maximum depth of the tree

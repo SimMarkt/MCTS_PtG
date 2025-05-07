@@ -87,7 +87,7 @@ def main():
         action = mcts.search(env_test_post,i)  # Perform MCTS search to get the best action
         obs, _ , _ , terminated, info = env_test_post.step(action)
         print(f' Pot_Rew {info["Pot_Reward"]}, Load_Id {info["Part_Full"]}, Meth_State {info["Meth_State"]}, Rew {info["reward [ct]"]}, Action {action}')
-
+        print(f"Scenario {EnvConfig.scenario}, Iterations {mcts.iterations}, exploration_weight {mcts.exploration_weight}, total_steps {mcts.total_steps}, maximum_depth {mcts.maximum_depth}")
         # Store data in stats
         if not terminated:
             j = 0
