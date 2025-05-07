@@ -13,7 +13,7 @@ import copy
 import yaml
 
 class MCTSNode:
-    def __init__(self, env, parent=None, action=None, done=False, remaining_steps=72, ):
+    def __init__(self, env, parent=None, action=None, done=False, remaining_steps=42, total_steps=42, depth=0, maximum_depth=42):
         self.env = env  # deepcopy of the env
         self.parent = parent
         self.action = action
@@ -21,10 +21,15 @@ class MCTSNode:
         self.visits = 0
         self.total_reward = 0.0
         self.done = done  # whether this state is terminal
-        self.remaining_steps = remaining_steps  # Number of steps remaining for the simulation
+        if remaining_steps < total_steps:
+            self.remaining_steps = remaining_steps  # Number of steps remaining for the simulation
+        else:
+            self.remaining_steps = total_steps
+        self.depth = depth
+        self.maximum_depth = maximum_depth
 
     def is_terminal(self):
-        return self.done
+        return self.done or self.depth >= self.maximum_depth  # Terminal if done or max depth reached
 
     def is_fully_expanded(self):
         legal_actions = self.get_legal_actions()
@@ -73,7 +78,7 @@ class MCTS:
 
     def search(self, root_env, rootnodeid):
         root_env_copy = copy.deepcopy(root_env)
-        root_node = MCTSNode(root_env_copy)
+        root_node = MCTSNode(root_env_copy, total_steps=self.total_steps, maximum_depth=self.maximum_depth)
 
         for _ in range(self.iterations):
             node = self._select(root_node)
@@ -90,6 +95,9 @@ class MCTS:
         return node
 
     def _expand(self, node):
+        if node.depth >= self.maximum_depth:  # Prevent expansion beyond max depth
+            return node
+
         legal_actions = node.get_legal_actions()
         tried_actions = [child.action for child in node.children]
         untried_actions = [a for a in legal_actions if a not in tried_actions]
@@ -99,7 +107,7 @@ class MCTS:
         obs, reward, terminated, truncated, info = new_env.step(action)
         done = terminated or truncated
         remaining_steps = node.remaining_steps - 1  # Decrease remaining steps by 1 each time we expand (To keep the simulation time equal)
-        child_node = MCTSNode(new_env, parent=node, action=action, done=done, remaining_steps=remaining_steps)
+        child_node = MCTSNode(new_env, parent=node, action=action, done=done, remaining_steps=remaining_steps, total_steps=self.total_steps, maximum_depth=self.maximum_depth)
         node.children.append(child_node)
         return child_node
 
