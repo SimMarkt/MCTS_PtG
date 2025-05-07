@@ -13,7 +13,7 @@ import copy
 import yaml
 
 class MCTSNode:
-    def __init__(self, env, parent=None, action=None, done=False, remaining_steps=72):
+    def __init__(self, env, parent=None, action=None, done=False, remaining_steps=72, ):
         self.env = env  # deepcopy of the env
         self.parent = parent
         self.action = action

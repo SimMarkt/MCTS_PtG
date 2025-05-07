@@ -22,7 +22,7 @@ class PTGEnv(gym.Env):
 
     metadata = {"render_modes": ["None"]}
 
-    def __init__(self, dict_input, train_or_eval = "train", render_mode="None"):
+    def __init__(self, dict_input, train_or_eval = "eval", render_mode="None"):
         """
             Initialize the PtG environment for training or evaluation
             :param dict_input: Dictionary containing energy market data, process data, and training configurations

@@ -63,15 +63,13 @@ def import_data(csvfile: str, path: str):
     return arr
 
 
-def load_data(EnvConfig, TrainConfig):
+def load_data(EnvConfig):
     """
         Loads historical market data and experimental methanation operation data
-        :param TrainConfig: Training configuration (class object)
         :return dict_price_data: Dictionary containing electricity, gas, and EUA market data
                 dict_op_data: Dictionary containing time-series data for dynamic methanation operations
     """
     print("---Load data")
-    path = TrainConfig.path
 
     # Define market data file types (electricity, gas, and EUA) and dataset splits.
     market_data_files = [('el_price', 'el'), ('gas_price', 'gas'), ('eua_price', 'eua')]
@@ -142,7 +140,7 @@ def load_data(EnvConfig, TrainConfig):
 class Preprocessing():
     """A class for preprocessing energy market and process data"""
 
-    def __init__(self, dict_price_data, dict_op_data, AgentConfig, EnvConfig, TrainConfig):
+    def __init__(self, dict_price_data, dict_op_data, EnvConfig):
         """
             Initializes preprocessing with configuration parameters and data
             :param dict_price_data: Dictionary containing historical market data.
@@ -188,7 +186,7 @@ class Preprocessing():
 
         self.preprocessing_rew()                # Compute potential reward and load identifier
         self.preprocessing_array()              # Convert day-ahead datasets into NumPy arrays for calculations.
-        self.define_episodes()                  # Define the number of episodes and the number of steps in each episode.       
+        self.define_episodes()                  # Define the number of episodes and the number of steps in each episode. (Not used in MCTS_PtG, but required for ptg_gym_env.py)      
         
 
     def preprocessing_rew(self):
@@ -302,115 +300,41 @@ class Preprocessing():
                    
 def initial_print():
     print('\n--------------------------------------------------------------------------------------------')    
-    print('---------RL_PtG: Deep Reinforcement Learning for Power-to-Gas dispatch optimization---------')
+    print('----------MCTS_PtG: Monte-Carlo Tree Search for Power-to-Gas dispatch optimization----------')
     print('--------------------------------------------------------------------------------------------\n')
 
 
-def config_print(EnvConfig):
+def config_print(mcts, EnvConfig):
     """
         Gathers and prints general settings
+        :param mcts: MCTS (class object)
         :param EnvConfig: Environment configuration (class object)
         :return str_id: String for identification of the present training run
     """
     print("Set test case...")
-    if TrainConfig.model_conf == "simple_train" or TrainConfig.model_conf == "save_model":
-        print(f"---Training case details: RL_PtG{TrainConfig.str_inv} | {TrainConfig.model_conf} ")
-    else: 
-        print(f"---Training case details: RL_PtG{TrainConfig.str_inv} | {TrainConfig.model_conf} | (Pretrained model: RL_PtG{TrainConfig.str_inv_load}) ")
-    str_id = "MCTS_PtG_" + TrainConfig.str_inv
+    str_id = "MCTS_PtG_"
     if EnvConfig.scenario == 1: print("    > Business case (_BS):\t\t\t 1 - Trading at the electricity, gas, and emission spot markets")
     elif EnvConfig.scenario == 2: print("    > Business case  (_BS):\t\t\t 2 - Fixed synthetic natural gas (SNG) price and trading at the electricity and emission spot markets")
     else: print("    > Business case (_BS):\t\t\t 3 - Participating in EEG tenders by using a CHP plant and trading at the electricity spot markets")
     str_id += "_BS" + str(EnvConfig.scenario)
     print(f"    > Operational load level (_OP) :\t\t {EnvConfig.operation}")
     str_id += "_" + str(EnvConfig.operation)
-    if EnvConfig.raw_modified == 'raw':    print(f"    > State feature design (_sf) :\t\t Raw energy market data (electricity, gas, and EUA market signals)")
-    else: print(f"    > State feature design (_sf) :\t\t Modified energy market data (potential reward and load identifier)")
-    str_id += "_sf" + str(EnvConfig.raw_modified)
-    print(f"    > Training episode length (_ep) :\t\t {EnvConfig.eps_len_d} days")
-    str_id += "_ep" + str(EnvConfig.eps_len_d)
-    print(f"    > Time step size (action frequency) (_ts) :\t {EnvConfig.sim_step} seconds")
+    print(f"    > Time step size (action frequency) (_ts) :\t {EnvConfig.sim_step} seconds\n")
     str_id += "_ts" + str(EnvConfig.sim_step)
-    print(f"    > Random seed (_rs) :\t\t\t {TrainConfig.seed_train}")
-    str_id += AgentConfig.get_hyper()
-    str_id += "_rs" + str(TrainConfig.seed_train)                       # Random seed at the end of "str_id" for file simplified file
+    print("MCTS settings...")
+    print(f"    > No. of Iterations (_it) :\t\t\t {mcts.iterations}")
+    str_id += "_it" + str(mcts.iterations)
+    print(f"    > Exploration parameter (_ex) :\t\t\t {mcts.exploration_weight}")
+    str_id += "_ex" + str(mcts.iterations)
+    
+    return str_id 
 
-    return str_id  
-       
-class Postprocessing():
-    """A class for post-processing"""
-
-    def __init__(self, str_id, AgentConfig, EnvConfig, TrainConfig, env_test_post, Preprocess):
-        """
-            Initializes variables
-            :param str_id: Unique identifier for the current training run.
-            :param AgentConfig: Configuration settings for the agent (class object).
-            :param EnvConfig: Configuration settings for the environment (class object).
-            :param TrainConfig: Configuration settings for training (class object).
-            :param env_test_post: Test environment instance used for post-processing.
-            :param Preprocess: Instance of the Preprocessing class.
-        """
-        self.AgentConfig = AgentConfig
-        self.EnvConfig = EnvConfig
-        self.TrainConfig = TrainConfig
-        self.eps_sim_steps_test = Preprocess.eps_sim_steps_test
-        self.env_test_post = env_test_post
-        self.stats_dict_test = {}
-        self.str_id = str_id
-
-    def test_performance(self):
-        """
-            Test RL policy on the test environment
-        """
-        stats = np.zeros((self.eps_sim_steps_test, len(self.EnvConfig.stats_names)))
-
-        obs = self.env_test_post.reset()
-        timesteps = self.eps_sim_steps_test#  - 6
-
-        for i in tqdm(range(timesteps), desc='---Apply MCTS planning on the test environment:'):
-
-            
-            
-
-            action, _ = self.model.predict(obs, deterministic=True)
-            obs, _ , terminated, info = self.env_test_post.step(action)
-
-
-
-
-
-            # Store data in stats
-            if not terminated:
-                j = 0
-                for val in info[0]:
-                    if j < 24:
-                        if val == 'Meth_Action':
-                            if info[0][val] == 'standby':
-                                stats[i, j] = 0
-                            elif info[0][val] == 'cooldown':
-                                stats[i, j] = 1
-                            elif info[0][val] == 'startup':
-                                stats[i, j] = 2
-                            elif info[0][val] == 'partial_load':
-                                stats[i, j] = 3
-                            else:
-                                stats[i, j] = 4
-                        else:
-                            stats[i, j] = info[0][val]
-                    j += 1
-        
-        
-        for m in range(len(self.EnvConfig.stats_names)):
-            self.stats_dict_test[self.EnvConfig.stats_names[m]] = stats[:(timesteps), m]
-
-        return None
-
-    def plot_results(self):
+def plot_results(stats_dict_test, EnvConfig, str_id):
         """Generates a multi-subplot plot displaying time-series data and methanation operations based on the agent's actions"""
         print("---Plot and save RL performance on the test set under ./plots/ ...\n") 
 
-        stats_dict = self.stats_dict_test
-        time_sim = stats_dict['steps_stats'] * self.EnvConfig.sim_step
+        stats_dict = stats_dict_test
+        time_sim = stats_dict['steps_stats'] * EnvConfig.sim_step
         time_sim *= 1 / 3600 / 24   # Converts the simulation time into days
         time_sim = time_sim[:-6]    # ptg_gym_env.py curtails an episode by 6 time steps to ensure a data overhead
         meth_state = stats_dict['Meth_State_stats'][:-6]+1
@@ -445,7 +369,7 @@ class Postprocessing():
         axs2_1.set_ylabel('Cumulative \n reward [€]')
         axs2_1.legend(loc="upper right", fontsize='small')
 
-        fig.suptitle(f"{self.str_id} \n Rew: {np.round(stats_dict['Meth_cum_reward_stats'][-7]/100, 0)} €", fontsize=9)
-        plt.savefig(f'plots/{self.str_id}_plot.png')
+        fig.suptitle(f"{str_id} \n Rew: {np.round(stats_dict['Meth_cum_reward_stats'][-7]/100, 0)} €", fontsize=9)
+        plt.savefig(f'plots/{str_id}_plot.png')
 
         plt.close()
