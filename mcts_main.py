@@ -55,8 +55,9 @@ def main():
     # --------------------------------------Initialize the RL configuration---------------------------------------
     initial_print()
     EnvConfig = EnvConfiguration()
-
     mcts = MCTS()
+    EnvConfig.path = os.path.dirname(__file__)
+    mcts.path = os.path.dirname(__file__)
 
     str_id = config_print(mcts, EnvConfig)
     
@@ -72,22 +73,35 @@ def main():
     print("Load environment...")
     env_id = 'PtGEnv-v0'
     check_env(env_id)              # Check the Gymnasium environment registry
-    env_test_post = gym.make(env_id, dict_input = Preprocess.dict_env_kwargs("test"))
+    env_test_post = gym.make(env_id, dict_input = Preprocess.dict_env_kwargs())
        
     # ----------------------------------------------MCTS Validation-----------------------------------------------
     print("Run MCTS on the validation set... >>>", str_id, "<<< \n")
 
-    _ = env_test_post.reset()
+    obs = env_test_post.reset()
     timesteps = Preprocess.eps_sim_steps_test
     stats = np.zeros((timesteps, len(EnvConfig.stats_names)))
     stats_dict_test = {}
+    pot_reward = 0
+
+    timesteps = 100
+    store_interval = 50
 
     for i in tqdm(range(timesteps), desc='---Apply MCTS planning on the test environment:'):
+        
+        if i % store_interval == 0 and i != 0: mcts.store_tree()  # Store the tree structure every store_interval steps
 
-        action = mcts.search(env_test_post,i)  # Perform MCTS search to get the best action
+        Meth_State = obs[0]['METH_STATUS']  # Get the current Meth_State from the observation
+        print("STATUS_METH", Meth_State, i)
+
+
+        action = mcts.search(env_test_post,i, Meth_State=Meth_State, init_el_price=obs[0]['Elec_Price'][0], init_pot_reward=pot_reward)  # Perform MCTS search to get the best action
+        
         obs, _ , _ , terminated, info = env_test_post.step(action)
-        print(f' Pot_Rew {info["Pot_Reward"]}, Load_Id {info["Part_Full"]}, Meth_State {info["Meth_State"]}, Rew {info["reward [ct]"]}, Action {action}')
+        pot_reward = info['Pot_Reward']
+        print(f' Pot_Rew {pot_reward}, Load_Id {info["Part_Full"]}, Meth_State {info["Meth_State"]}, Rew {info["reward [ct]"]}, Action {action}')
         print(f"Scenario {EnvConfig.scenario}, Iterations {mcts.iterations}, exploration_weight {mcts.exploration_weight}, total_steps {mcts.total_steps}, maximum_depth {mcts.maximum_depth}")
+
         # Store data in stats
         if not terminated:
             j = 0

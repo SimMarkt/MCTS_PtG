@@ -17,6 +17,8 @@ class EnvConfiguration:
 
         # Unpack data from dictionary
         self.__dict__.update(env_config)
+
+        self.path = None
         
         assert self.scenario in [1,2,3], f"Specified business scenario ({self.scenario}) must match one of the three implemented scenarios [1,2,3]!"
         
@@ -44,3 +46,7 @@ class EnvConfiguration:
                             'Meth_steam_revenues_stats', 'Meth_o2_revenues_stats', 'Meth_eua_revenues_stats',
                             'Meth_chp_revenues_stats', 'Meth_elec_costs_heating_stats', 'Meth_elec_costs_electrolyzer_stats',
                             'Meth_water_costs_stats', 'Meth_reward_stats', 'Meth_cum_reward_stats', 'pot_reward_stats', 'part_full_stats']
+        
+        # Additional variables for ptg_config_env (Not used in MCTS_PtG)
+        self.eps_len_d = None
+        self.raw_modified = None

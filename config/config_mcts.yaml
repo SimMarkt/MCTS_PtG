@@ -7,7 +7,9 @@
 # > The algorithm uses Upper Confidence Bound for Trees (UCT) to balance exploration and exploitation
 # ----------------------------------------------------------------------------------------------------------------
 
-iterations : 1000000            # No. of iterations for MCTS
+iterations : 10            # No. of iterations for MCTS
 exploration_weight : 1.41       # Exploration parameter for UCT
 total_steps : 42                # No. of steps in the simulation rollouts
 maximum_depth : 42              # Maximum depth of the tree
+
+path_log : "logs/"            # Path to save the logs of the tree structure
