@@ -21,7 +21,7 @@
 #   LHV: Lower heating value
 #   EEG: German Renewable Energy Act (Erneuerbare-Energien-Gesetz)
 
-scenario : 2                    # Business case (must be one of [1, 2, 3])
+scenario : 3                    # Business case (must be one of [1, 2, 3])
 operation : OP2                 # Load level: "OP1" or "OP2" for the PtG-CH4 plant
 price_ahead : 13                # Number of forecasted electricity price values for future data (0-12h)
 time_step_op : 2                # Time step between consecutive entries in the methanation operation data [s]
@@ -141,9 +141,9 @@ j_fully_developed : 100            # Simulation step -> 24000 sec (step marker)
 # Normalization bounds for PtG environment (adjust based on energy market and process data value ranges)
 el_l_b : -10    # Lower bound of electricity prices [ct/kWh_el]
 el_u_b : 90     # Upper bound of electricity prices [ct/kWh_el]
-gas_l_b : 0.4   # Lower bound of (S)NG prices [ct/kWh_th]
+gas_l_b : 0   # Lower bound of (S)NG prices [ct/kWh_th]
 gas_u_b : 32    # Upper bound of (S)NG prices [ct/kWh_th]
-eua_l_b : 23    # Lower bound of EUA prices [€/t_CO2]
+eua_l_b : 0    # Lower bound of EUA prices [€/t_CO2]
 eua_u_b : 98    # Upper bound of EUA prices [€/t_CO2]
 T_l_b : 10      # Lower bound of catalyst temperatures T_CAT [°C]
 T_u_b : 600     # Upper bound of catalyst temperatures T_CAT [°C]

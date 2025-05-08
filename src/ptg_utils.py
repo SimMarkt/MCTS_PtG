@@ -73,12 +73,12 @@ def load_data(EnvConfig):
 
     # Define market data file types (electricity, gas, and EUA) and dataset splits.
     market_data_files = [('el_price', 'el'), ('gas_price', 'gas'), ('eua_price', 'eua')]
-    splits = ['train', 'val', 'test']
+    splits = ['test']
 
     dict_price_data = {
-        f'{data[0]}_{split}': import_market_data(getattr(EnvConfig, f'datafile_path_{split}_{data[1]}'), data[1], path)
+        f'{data[0]}_{split}': import_market_data(getattr(EnvConfig, f'datafile_path_{split}_{data[1]}'), data[1], EnvConfig.path)
         for data in market_data_files for split in splits
-    }
+    } 
 
     # Function to verify consistency of market data sizes across datasets.
     def check_market_data_size(split):
@@ -106,34 +106,16 @@ def load_data(EnvConfig):
         ('op11_f_p_f_15', 17), ('op12_f_p_f_20', 18)
     ]
     dict_op_data = {
-        key: import_data(getattr(EnvConfig, f'datafile_path{num}'), path)
+        key: import_data(getattr(EnvConfig, f'datafile_path{num}'), EnvConfig.path)
         for key, num in op_data_files
     }
 
     if EnvConfig.scenario in [2, 3]:  
         gas_price = EnvConfig.ch4_price_fix if EnvConfig.scenario == 2 else 0
-        for key in ['gas_price_train', 'gas_price_val', 'gas_price_test']:
-            dict_price_data[key] = np.full(len(dict_price_data[key]), gas_price)
+        dict_price_data['gas_price_test'] = np.full(len(dict_price_data['gas_price_test']), gas_price)
 
         if EnvConfig.scenario == 3:  
-            for key in ['eua_price_train', 'eua_price_val', 'eua_price_test']:
-                dict_price_data[key] = np.zeros(len(dict_price_data[key]))
-
-    # Set reward level values
-    dict_price_data.update({f'{key}_reward_level': EnvConfig.r_0_values[key] 
-                            for key in ['el_price', 'gas_price', 'eua_price']})
-
-    # Check if training set is divisible by the episode length
-    min_train_len = 6                       # Minimum No. of days in the training set 
-    # RL training excludes 'min_train_len' days to maintain space for the day-ahead market price forecast.
-    EnvConfig.train_len_d = len(dict_price_data['gas_price_train']) - min_train_len 
-    assert EnvConfig.train_len_d > 0, f'The training set size must be greater than {min_train_len} days'
-    if EnvConfig.train_len_d % EnvConfig.eps_len_d != 0:
-        # Find all possible divisors of EnvConfig.train_len_d
-        divisors = [i for i in range(1, EnvConfig.train_len_d + 1) if EnvConfig.train_len_d % i == 0]
-        assert False, f'The training set size {EnvConfig.train_len_d} must be divisible by the episode length - data/config_env.yaml -> eps_len_d : {EnvConfig.eps_len_d}; Possible divisors are: {divisors}'
-    # Ensure that the training set is larger or at least equal to the defined episode length  
-    assert EnvConfig.train_len_d >= EnvConfig.eps_len_d, f'Training set size ({EnvConfig.train_len_d}) must be larger or at least equal to the defined episode length ({EnvConfig.eps_len_d})!'
+            dict_price_data['eua_price_test'] = np.zeros(len(dict_price_data['eua_price_test']))
 
     return dict_price_data, dict_op_data
 
@@ -247,8 +229,6 @@ class Preprocessing():
         # No. of days in the test set ("-1" accounts for the day-ahead overhead
         test_len_d = len(self.dict_price_data['gas_price_test']) - 1
 
-        self.eps_len = 24 * 3600 * self.EnvConfig.eps_len_d  # Episode length in [s]
-
         # No. of steps per episode in testing
         self.eps_sim_steps_test = int(24 * 3600 * test_len_d /self.EnvConfig.sim_step)
         
@@ -262,7 +242,7 @@ class Preprocessing():
             :return: env_kwargs - Dictionary containing global parameters and hyperparameters.
         """
 
-        # General environment configurations
+        # General environment configurations (Contains some variables not used in MCTS_PtG)
         env_kwargs = {
             **{f"ptg_{key}": self.EnvConfig.ptg_state_space[key] for key in 
             ["standby", "cooldown", "startup", "partial_load", "full_load"]},
@@ -279,10 +259,10 @@ class Preprocessing():
                 "j_fully_developed", "el_l_b", "el_u_b", "gas_l_b", "gas_u_b", "eua_l_b", "eua_u_b",
                 "T_l_b", "T_u_b", "h2_l_b", "h2_u_b", "ch4_l_b", "ch4_u_b", "h2_res_l_b", "h2_res_u_b",
                 "h2o_l_b", "h2o_u_b", "heat_l_b", "heat_u_b", "raw_modified"]},
-            "parallel": self.TrainConfig.parallel,
-            "n_eps_loops": self.n_eps_loops,
-            "reward_level": self.r_level,
-            "action_type": self.AgentConfig.rl_alg_hyp["action_type"],
+            "parallel": None,
+            "n_eps_loops": None,
+            "reward_level": [0],
+            "action_type": 'discrete',
         }
 
         # Operation data
@@ -294,6 +274,9 @@ class Preprocessing():
             "g_e": self.g_e_test,
             "rew_l_b": np.min(self.e_r_b_test[1, 0, :]),
             "rew_u_b": np.max(self.e_r_b_test[1, 0, :]),
+            "eps_ind": None,
+            "raw_modified": 'raw',
+            "state_change_penalty": 0.0,
         })
 
         return env_kwargs
@@ -324,8 +307,12 @@ def config_print(mcts, EnvConfig):
     print("MCTS settings...")
     print(f"    > No. of Iterations (_it) :\t\t\t {mcts.iterations}")
     str_id += "_it" + str(mcts.iterations)
-    print(f"    > Exploration parameter (_ex) :\t\t\t {mcts.exploration_weight}")
-    str_id += "_ex" + str(mcts.iterations)
+    print(f"    > Exploration parameter (_ex) :\t\t {mcts.exploration_weight}")
+    str_id += "_ex" + str(mcts.exploration_weight)
+    print(f"    > Simulation steps (_si) :\t\t\t {mcts.total_steps}")
+    str_id += "_si" + str(mcts.total_steps)
+    print(f"    > Maximum depth (_md) :\t\t\t {mcts.maximum_depth}\n")
+    str_id += "_md" + str(mcts.maximum_depth)
     
     return str_id 
 

@@ -11,6 +11,7 @@ import math
 import random
 import copy
 import yaml
+import csv
 
 class MCTSNode:
     def __init__(self, env, parent=None, action=None, done=False, remaining_steps=42, total_steps=42, depth=0, maximum_depth=42):
@@ -75,8 +76,20 @@ class MCTS:
         # Unpack data from dictionary
         self.__dict__.update(mcts_config)
 
+        # Initialize variables for storing tree structure (for debugging purposes)
+        self.path = None            # System path
+        self.time_store = False  # Flag to store the tree structure
+        self.Meth_State = None
+        self.init_el_price = None
+        self.init_pot_reward = None
 
-    def search(self, root_env, rootnodeid):
+        self.tree_log = []  # List to store tree structure
+
+    def search(self, root_env, Meth_State=None, init_el_price=None, init_pot_reward=None):
+        self.Meth_State = Meth_State
+        self.init_el_price = init_el_price
+        self.init_pot_reward = init_pot_reward
+
         root_env_copy = copy.deepcopy(root_env)
         root_node = MCTSNode(root_env_copy, total_steps=self.total_steps, maximum_depth=self.maximum_depth)
 
@@ -86,6 +99,12 @@ class MCTS:
                 node = self._expand(node)
             reward = self._simulate(node.env, node.done, node.action, node.remaining_steps)
             self._backpropagate(node, reward)
+
+        # Log the tree structure and save it to a CSV file if time_store is True
+        if self.time_store:
+            self._log_tree_structure(root_node)
+            self._save_tree_to_csv()
+            self.time_store = False  # Reset the flag after saving
 
         return root_node.most_visited_child().action
 
@@ -131,3 +150,32 @@ class MCTS:
             node.visits += 1
             node.total_reward += reward
             node = node.parent
+
+    def store_tree(self, path=None):
+        # Set the flag to store the tree structure
+        self.time_store = True
+
+    def _log_tree_structure(self, node, parent_id=None):
+        # Recursively log the tree structure
+        node_id = id(node)
+        self.tree_log.append({
+            "node_id": node_id,
+            "parent_id": id(node.parent) if node.parent else None,
+            "action": node.action,
+            "depth": node.depth,
+            "visits": node.visits,
+            "total_reward": node.total_reward,
+            "Meth_State": self.Meth_State,
+            "init_el_price": self.init_el_price,
+            "init_pot_reward": self.init_pot_reward,
+        })
+        for child in node.children:
+            self._log_tree_structure(child, node_id)
+
+    def _save_tree_to_csv(self):
+        # Save the logged tree structure to a CSV file
+        with open(self.path + self.path_log + "tree_structure.csv", "w", newline="") as csvfile:
+            fieldnames = ["node_id", "parent_id", "action", "depth", "visits", "total_reward", "Meth_State", "init_el_price", "init_pot_reward"]
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(self.tree_log)
