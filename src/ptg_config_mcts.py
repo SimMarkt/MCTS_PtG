@@ -164,7 +164,7 @@ class MCTS:
             "action": node.action,
             "depth": node.depth,
             "visits": node.visits,
-            "total_reward": node.total_reward,
+            "total_reward_p_visits": node.total_reward/node.visits,
             "Meth_State": self.Meth_State,
             "init_el_price": self.init_el_price,
             "init_pot_reward": self.init_pot_reward,
@@ -175,7 +175,7 @@ class MCTS:
     def _save_tree_to_csv(self):
         # Save the logged tree structure to a CSV file
         with open(self.path + self.path_log + "tree_structure.csv", "w", newline="") as csvfile:
-            fieldnames = ["node_id", "parent_id", "action", "depth", "visits", "total_reward", "Meth_State", "init_el_price", "init_pot_reward"]
+            fieldnames = ["node_id", "parent_id", "action", "depth", "visits", "total_reward_p_visits", "Meth_State", "init_el_price", "init_pot_reward"]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(self.tree_log)
