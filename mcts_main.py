@@ -78,28 +78,23 @@ def main():
     # ----------------------------------------------MCTS Validation-----------------------------------------------
     print("Run MCTS on the validation set... >>>", str_id, "<<< \n")
 
-    obs = env_test_post.reset()
+    obs, _ = env_test_post.reset()
     timesteps = Preprocess.eps_sim_steps_test
     stats = np.zeros((timesteps, len(EnvConfig.stats_names)))
     stats_dict_test = {}
     pot_reward = 0
 
-    timesteps = 100
-    store_interval = 50
+    timesteps = 2900
 
     for i in tqdm(range(timesteps), desc='---Apply MCTS planning on the test environment:'):
         
-        if i % store_interval == 0 and i != 0: mcts.store_tree()  # Store the tree structure every store_interval steps
+        if i % mcts.store_interval == 0 and i != 0: mcts.store_tree(i)  # Store the tree structure every store_interval steps
 
-        Meth_State = obs[0]['METH_STATUS']  # Get the current Meth_State from the observation
-        print("STATUS_METH", Meth_State, i)
-
-
-        action = mcts.search(env_test_post,i, Meth_State=Meth_State, init_el_price=obs[0]['Elec_Price'][0], init_pot_reward=pot_reward)  # Perform MCTS search to get the best action
+        action = mcts.search(env_test_post, Meth_State=obs['METH_STATUS'], init_el_price=obs['Elec_Price'][0], init_pot_reward=pot_reward)  # Perform MCTS search to get the best action
         
         obs, _ , _ , terminated, info = env_test_post.step(action)
         pot_reward = info['Pot_Reward']
-        print(f' Pot_Rew {pot_reward}, Load_Id {info["Part_Full"]}, Meth_State {info["Meth_State"]}, Rew {info["reward [ct]"]}, Action {action}')
+        print(f' Pot_Rew {pot_reward/6}, Load_Id {info["Part_Full"]}, Meth_State {info["Meth_State"]}, Rew {info["reward [ct]"]}, Action {action}')
         print(f"Scenario {EnvConfig.scenario}, Iterations {mcts.iterations}, exploration_weight {mcts.exploration_weight}, total_steps {mcts.total_steps}, maximum_depth {mcts.maximum_depth}")
 
         # Store data in stats
