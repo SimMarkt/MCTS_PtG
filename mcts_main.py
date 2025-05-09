@@ -9,7 +9,6 @@
 
 # --------------------------------------------Import Python libraries---------------------------------------------
 import os
-import torch as th
 
 # Library for the RL environment
 from gymnasium.envs.registration import registry, register
@@ -19,14 +18,6 @@ import gymnasium as gym
 from src.ptg_utils import load_data, initial_print, config_print, Preprocessing, plot_results
 from src.ptg_config_mcts import MCTS
 from src.ptg_config_env import EnvConfiguration
-
-import math
-import random
-from typing import Any, List
-from tqdm import tqdm
-import numpy as np
-
-import matplotlib.pyplot as plt
 
 def check_env(env_id):
     """
@@ -77,56 +68,12 @@ def main():
        
     # ----------------------------------------------MCTS Validation-----------------------------------------------
     print("Run MCTS on the validation set... >>>", str_id, "<<< \n")
-
-    obs, _ = env_test_post.reset()
-    timesteps = Preprocess.eps_sim_steps_test
-    stats = np.zeros((timesteps, len(EnvConfig.stats_names)))
-    stats_dict_test = {}
-    pot_reward = 0
-
-    timesteps = 2900
-
-    for i in tqdm(range(timesteps), desc='---Apply MCTS planning on the test environment:'):
-        
-        if i % mcts.store_interval == 0 and i != 0: mcts.store_tree(i)  # Store the tree structure every store_interval steps
-
-        action = mcts.search(env_test_post, Meth_State=obs['METH_STATUS'], init_el_price=obs['Elec_Price'][0], init_pot_reward=pot_reward)  # Perform MCTS search to get the best action
-        
-        obs, _ , _ , terminated, info = env_test_post.step(action)
-        pot_reward = info['Pot_Reward']
-        print(f' Pot_Rew {pot_reward/6}, Load_Id {info["Part_Full"]}, Meth_State {info["Meth_State"]}, Rew {info["reward [ct]"]}, Action {action}')
-        print(f"Scenario {EnvConfig.scenario}, Iterations {mcts.iterations}, exploration_weight {mcts.exploration_weight}, total_steps {mcts.total_steps}, maximum_depth {mcts.maximum_depth}")
-
-        # Store data in stats
-        if not terminated:
-            j = 0
-            for val in info:
-                if j < 24:
-                    if val == 'Meth_Action':
-                        if info[val] == 'standby':
-                            stats[i, j] = 0
-                        elif info[val] == 'cooldown':
-                            stats[i, j] = 1
-                        elif info[val] == 'startup':
-                            stats[i, j] = 2
-                        elif info[val] == 'partial_load':
-                            stats[i, j] = 3
-                        else:
-                            stats[i, j] = 4
-                    else:
-                        stats[i, j] = info[val]
-                j += 1
-        
-    for m in range(len(EnvConfig.stats_names)):
-        stats_dict_test[EnvConfig.stats_names[m]] = stats[:(timesteps), m]
-
-
-
+    mcts.run(env_test_post, EnvConfig, Preprocess.eps_sim_steps_test)  # Run MCTS on the test environment
     print("...finished MCTS validation\n")
     
     # # ----------------------------------------------Postprocessing------------------------------------------------
     # print("Postprocessing...")
-    plot_results(stats_dict_test, EnvConfig, str_id)
+    plot_results(mcts.stats_dict_test, EnvConfig, str_id)
 
 if __name__ == '__main__':
     main()

@@ -1,12 +1,12 @@
 # MCTS_PtG
 
-The **MCTS_PtG** project provides a framework for the economic optimization of Power-to-Gas (PtG) dispatch using Monte-Carlo Tree Search (MCTS). PtG is a technology that enables the chemical energy storage of renewable energy in chemical energy carriers such as hydrogen (H<sub>2</sub>) or methane (CH<sub>4</sub>). **MCTS_PtG** implements decision-time planning of PtG operation, based on process data and Day-ahead electricity, natural gas, and emissions spot market data.  
+The **MCTS_PtG** project provides a framework for the economic optimization of Power-to-Gas (PtG) dispatch using Monte Carlo Tree Search (MCTS). PtG is a technology that enables the chemical energy storage of renewable energy in chemical energy carriers such as hydrogen (H<sub>2</sub>) or methane (CH<sub>4</sub>). **MCTS_PtG** implements *decision-time planning* of PtG operation, based on process data and Day-ahead electricity, natural gas, and emissions spot market data.  
 
-This repository contains the source code for the applied MCTS algorithm. An which has been successfully demonstrated for the autonomous control of a real-world PtG pilot plant in Northern Germany [1].  
+This repository contains the source code for the applied MCTS algorithm and a data-driven process model of a real-world PtG plant. 
 
-![RL_PtG_int](plots/RL_PtG_int.png)
+![MCTS_PtG_int](plots/MCTS_PtG_int.png)
 
-*Figure 1: Utilization of deep Reinforcement Learning for dispatch optimization of a real-world Power-to-Gas plant.*
+*Figure 1: Utilization of Monte Carlo Tree Search for dispatch optimization of a Power-to-Gas plant.*
 
 ---
 
@@ -18,24 +18,22 @@ This repository contains the source code for the applied MCTS algorithm. An whic
 4. [License](#license)
 5. [Citing](#citing)
 6. [References](#references)
-7. [Acknowledgments](#acknowledgments)
 
 ---
 
 ## Overview
 
-SINCE THE ROLLOUT policy is deterministic, EVERY ROLLOUT retrieves the same result -> no parallelization of rollouts necessary. Also the environment has memory access as limiting factor and not the floating point operations -> no fast compiling with JAX or NUMBA is implementing.
-Instead masking the action space to possible actions in each state led to performance increase.
-
-**RL_PtG** is written in Python and includes a data-driven process model of a real-world PtG plant. This section provides an in-depth explanation of the application and details the algorithms used, the data preprocessing, and the feature design.  
+**MCTS_PtG** is written in Python and includes a data-driven process model of a real-world PtG plant in **PtGEnv** (adapted from [1, 2]). This section provides an an overview on the application and details the MCTS algorithm used. For more information on **PtGEnv**, please refer to [1, 2].
 
 ### Application
 
-The PtG process typically begins with water electrolysis, where an electric current is used to split water (H<sub>2</sub>O) into hydrogen and oxygen (O<sub>2</sub>). **RL_PtG** assumes a proton exchange membrane (PEM) electrolyzer with a load-dependent efficiency modeled after a commercial system [2]. The efficiency has been derived using experimental data and linear regression with nonlinear basis functions [3].  
+The application details are also stated in [2] (https://github.com/SimMarkt/RL_PtG); for the sake of completeness, they are also included here.
 
-In addition to PEM electrolysis, **RL_PtG** incorporates a chemical methanation unit that converts hydrogen and carbon dioxide (CO<sub>2</sub>) into methane. Since biogas contains a significant amount of CO₂ (up to 55%), this process utilizes biogas as a carbon source. To accurately model the methanation unit's process dynamics—which dominate the overall PtG system dynamics—the approach integrates a time-series process model based on experimental data from a real-world pilot plant.  
+The PtG process typically begins with water electrolysis, where an electric current is used to split water (H<sub>2</sub>O) into hydrogen and oxygen (O<sub>2</sub>). **RL_PtG** assumes a proton exchange membrane (PEM) electrolyzer with a load-dependent efficiency modeled after a commercial system [3]. The efficiency has been derived using experimental data and linear regression with nonlinear basis functions [4].  
 
-The experimental data captures plant behavior during startup, load changes, cooldown, and standby operations of the methanation unit. In standby mode, the reactor temperature is maintained at approximately 190°C to enable a rapid warm startup. The data-driven process model switches between different time-series datasets to simulate dynamic plant operations. This approach is both simple and highly accurate and provides that the plant operates consistently and predictably [3].  
+In addition to PEM electrolysis, **MCTS_PtG** incorporates a chemical methanation unit that converts hydrogen and carbon dioxide (CO<sub>2</sub>) into methane. Since biogas contains a significant amount of CO₂ (up to 55%), this process utilizes biogas as a carbon source. To accurately model the methanation unit's process dynamics—which dominate the overall PtG system dynamics—the approach integrates a time-series process model based on experimental data from a real-world pilot plant.  
+
+The experimental data captures plant behavior during startup, load changes, cooldown, and standby operations of the methanation unit. In standby mode, the reactor temperature is maintained at approximately 190°C to enable a rapid warm startup. The data-driven process model switches between different time-series datasets to simulate dynamic plant operations. This approach is both simple and highly accurate and provides that the plant operates consistently and predictably [1].  
 
 Figure 2 illustrates the current PtG process, where the produced CH<sub>4</sub> can either be injected into the natural gas grid or used in a gas engine for combined heat and power (CHP) generation. The various methods of processing and selling CH<sub>4</sub> define three distinct business scenarios (BS) within this application:  
 
@@ -45,58 +43,59 @@ Figure 2 illustrates the current PtG process, where the produced CH<sub>4</sub> 
 
 Additional revenue sources include heat, oxygen, and European Emission Allowances (EUA). Since BS1 and BS2 bind CO₂ in methane, they can generate revenue by selling EUAs through the European Emissions Trading System (EU-ETS). The primary operational costs of the process include electricity and water, with electricity being purchased from the German Day-ahead spot market.  
 
-**RL_PtG** integrates historical electricity market data from `data/spot_market_data/`, sourced from SMARD [4]. The original research and RL training in [1,3] also utilized historical market data for gas and EUA from MONTEL [5]. However, due to licensing restrictions, the present repository only includes synthesized datasets that replicate the statistical properties and non-linear characteristics of the original data.  
+**MCTS_PtG** integrates historical electricity market data from `data/spot_market_data/`, sourced from SMARD [4]. The original research and RL training in [1] also utilized historical market data for gas and EUA from MONTEL [5]. However, due to licensing restrictions, the present repository only includes synthesized datasets that replicate the statistical properties and non-linear characteristics of the original data.  
 
-The **RL_PtG** framework models the complete PtG process, including PEM electrolysis, chemical methanation, and energy market data, within the **PtGEnv** environment (*Gymnasium* framework). For an overview of the project's directories and files, refer to the [Project Structure](#project-structure) section.  
+The **MCTS_PtG** framework models the complete PtG process, including PEM electrolysis, chemical methanation, and energy market data, within the **PtGEnv** environment (*Gymnasium* framework). For an overview of the project's directories and files, refer to the [Project Structure](#project-structure) section.  
 
-![RL_PtG](plots/RL_PtG.png)
+![MCTS_PtG](plots/MCTS_PtG.png)
 
-*Figure 2: Optimization framework for Power-to-Gas dispatch using Reinforcement Learning agents and the PtGEnv environment including the different business cases.*
+*Figure 2: Optimization framework for Power-to-Gas dispatch using Monte Carlo Tree Search (MCTS) and the PtGEnv environment including the different business cases.*
 
-### Deep RL Algorithms  
+### MCTS Algorithms
 
-Deep reinforcement learning (RL) offers a promising approach for optimizing the economic operation of chemical plants, handling both the **non-linearity** and **stochasticity** of process dynamics and market behavior. 
+The MCTS algorithm is a rollout-based algorithm for decision-time planning. Decision-time planning refers to a planning approach in which computation is performed at the moment a decision needs to be made, rather than building a complete plan in advance [6]. 
 
-For deep RL, **RL_PtG** integrates the *Stable-Baselines3* and *SB3 Contrib* libraries, which provide implementations of various state-of-the-art deep RL algorithms. This project includes the following algorithms from these libraries:  
+MCTS proceeds through four main steps in a loop (Fig. 3), gradually building a search tree to guide decision-making. The loop is repeated for a set number of iterations:
 
-**DQN** [6], **A2C** [7], **PPO** [8], **TD3** [9], **SAC** [10], and **TQC** [11]  
+1. **Selection:**
+Starting from the root node, MCTS recursively selects child nodes according to a tree/selection policy until a leaf node is reached.
+The tree policy balances exploration (trying less-visited nodes) and exploitation (choosing high-reward nodes).
+Typical policies are based on *Upper Confidence Bound for Trees* (UCT).
 
-For detailed information on these implementations, refer to:  
+`(Q / N) + c * sqrt(ln(N_parent) / N)`
 
-- **Stable-Baselines3:** [https://stable-baselines3.readthedocs.io/en/master/guide/algos.html](https://stable-baselines3.readthedocs.io/en/master/guide/algos.html)  
-- **SB3 Contrib:** [https://sb3-contrib.readthedocs.io/en/master/](https://sb3-contrib.readthedocs.io/en/master/)  
+Q: Total reward from simulations for this child.
+N: Number of times this child has been visited.
+N_parent: Number of times the parent node has been visited.
+c: Exploration constant (commonly √2 or tuned per application).
 
-Algorithm configurations for training runs can be set in `config/config_agent.yaml`. 
+2. **Expansion:**
+If the selected node is not terminal and has untried actions, **MCTS_PtG** expands the tree by creating one or more child nodes for those actions.
 
-If you wish to add a new algorithm from *Stable-Baselines3* or *SB3 Contrib*, you must modify the following files accordingly:  
+3. **Simulation (Rollout):**
+From the new node, MCTS performs a rollout and simulates a sequence of actions with the simulator until a terminal state is reached.
+In **MCTS_PtG**, the rollout policy is simply following the action of the node, which was discovered as a better choice than a random policy.
+Random policies dramatically fail in **PtGEnv** [1].
+(Other Rollout policies are in progress)
 
-- `config/config_agent.yaml`  
-- `src/rl_config_agent.py`  
+4. **Backpropagation:**
+MCTS propagates the simulation result back up the tree, updating statistics (like visit counts and total reward) for each node along the path.
 
-Use the existing implementations as a reference when making adjustments.  
+![MCTS_Alg](plots/MCTS_Alg.png)
 
-### Data Preprocessing and Feature Design  
+*Figure 3: Selection, Expansion, Simulation, and Backpropagation within the Monte Carlo Tree Search algorithm.*
 
-During the development of **RL_PtG**, two different state feature design approaches were explored for PtG dispatch optimization. These can be configured in `config/config_env.yaml`.
+**Note:** Since the present rollout policy is deterministic and the memory access within **PtGEnv** is the main performance bottleneck, **MCTS_PtG** omits parallelization of rollouts and fast compiling with JAX or NUMBA.
 
-The type of state feature design is controlled via the `raw_modified` parameter:  
+**Note:** For Selection and Expansion, **MCTS_PtG** uses action masking to include only the possible actions for the PtG plant. These actions are determined by the programmable logic controller (PLC) of the real-world plant and depend on its operation state. The following table illustrates the possible actions:
 
-- `raw`: The environment provides the RL agent with raw Day-ahead market prices for electricity, gas, and EUA.  
-- `mod`: The environment precomputes a *potential reward* and a *load identifier* for the corresponding Day-ahead period (default: 0-12 hours).  
-
-In `mod`, the environment calculates the potential reward assuming steady-state operation under three conditions (*Partial load*, *Full load*, and *Cooldown*) for the selected Day-ahead period.
-
-The potential reward represents the maximum achievable reward in steady-state operation under the current market conditions in one of these conditions. However, it does not indicate which load level is the most beneficial.  
-
-To address this, the load identifier classifies the most profitable operation type:  
-
-| Load Condition  | Identifier Value |
-|----------------|-----------------|
-| *Cooldown*   | -1              |
-| *Partial Load* | 0              |
-| *Full Load*   | 1              |
-
-Together, the potential reward and load identifier provide insights into the most beneficial operating mode and its expected profitability. However, this approach does not account for plant dynamics, meaning real-world transitions between states may still impact performance.  
+| Operation State  | Startup | Partial Load | Full Load | Cooldown | Standby |
+|----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
+| *a_Startup*   | ✅               | ❌              | ❌              | ✅               | ✅               |
+| *a_PartialLoad* |   ❌           | ✅               | ✅               | ❌              | ❌             |
+| *a_FullLoad*   |  ❌            | ✅               | ✅               | ❌              | ❌             |
+| *a_Cooldown* |  ✅               | ✅               | ✅               | ✅               | ✅               |
+| *a_Standby* |   ✅               | ✅               | ✅               | ✅               | ✅               |
 
 ---
 
@@ -105,12 +104,11 @@ Together, the potential reward and load identifier provide insights into the mos
 The project is organized into the following directories and files:
 
 ```plaintext
-RL_PtG/
+MCTS_PtG/
 │
 ├── config/
-│   ├── config_agent.yaml
 │   ├── config_env.yaml
-│   └── config_train.yaml
+│   └── config_mcts.yaml
 │
 ├── data/
 │   ├── OP1/
@@ -125,25 +123,22 @@ RL_PtG/
 ├── plots/
 │
 ├── src/
-│   ├── rl_config_agent.py
-│   ├── rl_config_env.py
-│   ├── rl_config_train.py
-│   ├── rl_opt.py
-│   └── rl_utils.py
+│   ├── ptg_config_env.py
+│   ├── ptg_config_mcts.py
+│   ├── ptg_opt.py
+│   └── ptg_utils.py
 │
 ├── tensorboard/
 │
 ├── requirements.txt
-├── rl_main.py
-└── rl_tb.py
+└── mcts_main.py
 
 ```
 
 ### `config/`  
-Contains configuration files for the project:  
-- **`config/config_agent.yaml`**: Configuration for the RL agent.  
+Contains configuration files for the project:   
 - **`config/config_env.yaml`**: Configuration for the PtG environment.  
-- **`config/config_train.yaml`**: Configuration for the training procedure.  
+- **`config/config_mcts.yaml`**: Configuration for the MCTS algorithm.  
 
 ### `data/`
 Stores process data for two load levels (**OP1** and **OP2**) with different dynamics, along with energy market data:  
@@ -180,27 +175,35 @@ Contains the PtG environment, modeled as a *Gymnasium* class:
 - **`env/ptg_gym_env.py`**: Power-to-Gas environment implementation.
 
 ### `logs/`
-Stores training logs. RL_PtG saves the best-performing RL algorithm and its parameters during validation.  
+Stores logs of the tree structure.
 
 ### `plots/`
-After training, RL_PtG evaluates the best RL policy on the test set and generates a performance diagram.
+**MCTS_PtG** generates a performance diagram and stores it as a .png file.
 
 ### `src/`
 Contains source code for pre- and postprocessing:
-- **`src/rl_config_agent.py`**: Preprocesses agent settings.
-  - `AgentConfiguration()`: Agent class.
-    - `set_model()`: Initializes a Stable-Baselines3/SB3 Contrib model.
-    - `load_model()`: Loads a pretrained RL model.
-    - `save_model()`: Saves the trained model and replay buffer (if applicable).
-    - `get_hyper()`: Displays hyperparameters and generates an identifier string using `hyp_print()`. 
-    - `hyp_print()`: Prints and appends hyperparameter values to the identifier.
 - **`src/rl_config_env.py`**: Preprocesses environment settings.
   - `EnvConfiguration()`: Environment class.
-- **`src/rl_config_train.py`**: Preprocesses training settings.
-  - `TrainConfiguration()`: Training class.
-- **`src/rl_opt.py`**: Computes the theoretical optimum T-OPT ignoring plant dynamics.
+- **`src/rl_config_mcts.py`**: Contains the source code for the MCTS algorithm with a node class and mcts class.
+  - `MCTSNode()`: Node class.
+    - `is_terminal()`: Checks if the node is terminal.
+    - `is_fully_expanded()`: Checks if all possible actions have been tried at this node.
+    - `get_legal_actions()`: Returns the possible actions for the current node based on the environment's action space.
+    - `best_child()`: Selects the best child node based on UCT (Upper Confidence Bound for Trees).
+    - `most_visited_child()`: Selects the child node with the most visits.
+  - `MCTS()`: MCTS algorithm class.
+    - `search()`: Performs MCTS search to find the best action using `_select()`, `_expand()`, `_simulate()`, and `_backpropagate()`.
+    - `_select()`: Selects the best child node based on the tree policy.
+    - `_expand()`: Expands the node by adding a new child node.
+    - `_simulate()`: Simulates the environment from the current node to a leaf node.
+    - `_backpropagate()`: Backpropagates the reward from the leaf node to the root node.
+    - `store_tree()`: Set the flag to store the tree structure.
+    - `_log_tree_structure()`: Recursively log the tree structure.
+    - `_save_tree_to_csv()`: Save the logged tree structure to a CSV file.
+    - `run()`: Run MCTS on the test environment using `search()`.
+- **`src/ptg_opt.py`**: Computes the theoretical optimum T-OPT ignoring plant dynamics.
   - `calculate_optimum()`: Computes the potential rewards, the load identifiers, and the theoretical optimum T-OPT assuming no operational constraints.          
-- **`src/rl_utils.py`**: Contains utility and helper functions.
+- **`src/ptg_utils.py`**: Contains utility and helper functions.
   - `import_market_data()`: Loads Day-ahead market price data.
   - `import_data()`: Imports experimental methanation process data.
   - `load_data()`: Loads historical market and process data using `import_market_data()` and `import_data()`.
@@ -212,25 +215,15 @@ Contains source code for pre- and postprocessing:
     - `dict_env_kwargs()`: Stores global parameters and hyperparameters in a dictionary.
     - `initial_print()`: Displays startup information.
     - `config_print()`: Prints general configuration settings.
-    - `_make_env()`: Creates and normalizes Gymnasium environments.
-    - `eval_callback_dec()`: Decorator function for evaluation callbacks.
-    - `_make_eval_env()`: Creates an evaluation environment using `_make_env()` and `eval_callback_dec()`.
-    - `create_vec_envs()`: Generates vectorized environments for training, validation, and testing using `_make_eval_env()` and `_make_env()`.
-  - `Postprocessing()`: Postprocessing class.
-    - `test_performance()`: Evaluates the RL policy in the test environment.
     - `plot_results()`: Generates performance plots.
 
-### `tensorboard/`
-Stores *TensorBoard logs* for monitoring RL training progress.
 
 ### **Main Script**  
-- **`rl_main.py`** – The main script for training the RL agent on the PtG dispatch task.  
-  - `computational_resources()` – Configures computational settings.  
+- **`mcts_main.py`** – The main script for running the MCTS algorithm on the PtG dispatch task.  
   - `check_env()` – Registers the Gymnasium environment if not already present.  
-  - `main()` – Runs model training and evaluation.  
+  - `main()` – Runs the model.  
 
 ### **Miscellaneous**  
-- **`rl_tb.py`** – Starts a TensorBoard server for monitoring training progress.  
 - **`requirements.txt`** – Lists required Python libraries.
 
 ---
@@ -245,10 +238,10 @@ To run **RL_PtG** in a Python virtual environment, follow these steps to install
 
 ```bash
 # Clone the repository
-git clone https://github.com/SimMarkt/RL_PtG.git
+git clone https://github.com/SimMarkt/MCTS_PtG.git
 
 # Navigate to the project directory
-cd RL_PtG
+cd MCTS_PtG
 
 # Create a Python virtual environment
 python -m venv venv
@@ -261,117 +254,87 @@ pip install -r requirements.txt
 
 ```
 
-After setting up the Python environment and installing the necessary packages, you can adjust the environment, agent, and training configurations by modifying the YAML files in the `config/` directory. RL training is initiated by running the main script `rl_main.py`.  
+After setting up the Python environment and installing the necessary packages, you can adjust the environment and MCTS configurations by modifying the YAML files in the `config/` directory. MCTS evaluation is initiated by running the main script `ptg_main.py`.  
 
 ### Using a Docker container
 
-To run **RL_PtG** as a Docker container, follow these steps to install and run the project:
+To run **MCTS_PtG** as a Docker container, follow these steps to install and run the project:
 
 ```bash
 # Clone the repository
-git clone https://github.com/SimMarkt/RL_PtG.git
+git clone https://github.com/SimMarkt/MCTS_PtG.git
 
 # Navigate to the project directory
-cd RL_PtG
+cd MCTS_PtG
 
 # Build the Docker container using the 'Dockerfile'
-docker build -t rl-ptg:v1 .
+docker build -t mcts-ptg:v1 .
 
 # Verify that the image was created successfully
 docker images
 
 >>
 REPOSITORY    TAG       IMAGE ID       CREATED         SIZE
-rl-ptg        v1        ...            3 minutes ago   5.87GB
+mcts-ptg      v1        ...            8 minutes ago   5.77GB
 >>
 
 # Run the container
-docker run --rm -it rl-ptg:v1
+docker run --rm -it mcts-ptg:v1
 
 ```
 
-If you need to adjust the environment, agent, or training configurations, you can modify the YAML files located in the `config/` directory. After making these changes, rebuild the Docker image to apply them in the container (you can also optionally update the tag):
+If you need to adjust the environment or MCTS configurations, you can modify the YAML files located in the `config/` directory. After making these changes, rebuild the Docker image to apply them in the container (you can also optionally update the tag):
 
 ```bash
 # Rebuild the Docker image using the 'Dockerfile'
-docker build -t rl-ptg:v1 .
+docker build -t rl-ptg:v2 .
 
 # Verify that the image was created successfully
 docker images
 
 >>
 REPOSITORY    TAG       IMAGE ID       CREATED         SIZE
-rl-ptg        v1        ...            1 minutes ago   5.87GB
+mcts-ptg      v2        ...            2 minutes ago   5.77GB
 >>
 
 # Run the container
-docker run --rm -it rl-ptg:v1
+docker run --rm -it mcts-ptg:v2
 
 ```
 
-Please note that training the RL agents can be resource-intensive, especially if you're performing extensive hyperparameter optimization or conducting in-depth analysis using multiple random seeds. In such cases, it's recommended to avoid using the Docker container and instead set up a Python virtual environment (as described above) for better performance.
+Please note that decision-time planning with MCTS can be resource-intensive, especially if you're performing extensive hyperparameter optimization or conducting in-depth analysis. In such cases, it's recommended to avoid using the Docker container and instead set up a Python virtual environment (as described above) for better performance.
 
-### Monitoring
+### Evaluation
 
-During training, the RL model is periodically evaluated on the validation environment using new, unseen energy market data:  
-- The best-performing algorithm is automatically saved in the `logs/` directory. 
-- Training results, including cumulative rewards on the training and validation sets, as well as algorithm-specific properties, are logged in *TensorBoard* (`tensorboard/`).  
-
-To monitor the training and evaluation results, start the **TensorBoard server**:
-
-```bash
-python rl_tb.py
-```
-
-Then, open TensorBoard in your browser: http://localhost:6006/
-
-Figure 3 illustrates a learning curve for a PPO algorithm trained on the PtG dispatch optimization task.
-
-![TB_plot](plots/tb_plot.png)
-
-*Figure 3: Graphical user interface of the tensorboard server for RL monitoring with a learning curve of PPO on the validation environment.*
-
-After RL training, RL_PtG selects the best-performing algorithm from `logs/` and evaluates its performance on the *test environment* to assess its generalization capability. The results are visualized and stored in `plots/` (Fig. 4).  
+After an MCTS run, the results are visualized and stored in `plots/` (Fig. 4).  
 
 ![Results](plots/RL_PtG_train_BS2_OP2_sfmod_ep37_ts600_PPO_al5e-05_ga0.973_ec1e-05_nf21_bs203_hl2_hu358_acReLU_ge0.8002_ep13_naFalse_gsFalse_rs3654_plot.png)
 
-*Figure 4: PPO performance on the test environment including energy market data, PtG process state, methane production, reward, and cumulative reward.*
+*Figure 4: MCTS performance including energy market data, PtG process state, methane production, reward, and cumulative reward.*
 
 The file name and title indicate the applied settings:  
+
+    print(f"    > Time step size (action frequency) (_ts) :\t {EnvConfig.sim_step} seconds\n")
+    str_id += "_ts" + str(EnvConfig.sim_step)
+    print("MCTS settings...")
+    print(f"    > No. of Iterations (_it) :\t\t\t {mcts.iterations}")
+    str_id += "_it" + str(mcts.iterations)
+    print(f"    > Exploration parameter (_ex) :\t\t {mcts.exploration_weight}")
+    str_id += "_ex" + str(mcts.exploration_weight)
+    print(f"    > Simulation steps (_si) :\t\t\t {mcts.total_steps}")
+    str_id += "_si" + str(mcts.total_steps)
+    print(f"    > Maximum depth (_md) :\t\t\t {mcts.maximum_depth}\n")
+    str_id += "_md" + str(mcts.maximum_depth)
 
 | Parameter | Description |  
 |-----------|------------|  
 | **Business Scenario (BS)** | Scenario defining the operational and economic conditions |  
 | **Load Level (OP)** | Operating load level for PtG dispatch |  
-| **State Feature Design (sf)** | Feature engineering method used for state representation |  
-| **Training Episode Length (ep)** | Number of time steps per training episode |  
 | **Time-Step Size (ts)** | Duration of a single time step in the simulation |  
-| **Algorithm (al)** | Deep RL algorithm used |  
-| **Discount Factor (ga)** | Discount rate for future rewards |  
-| **Initial Exploration Coefficient (ie)** | Initial value for exploration-exploitation tradeoff |  
-| **Final Exploration Coefficient (fe)** | Final value for exploration-exploitation tradeoff |  
-| **Exploration Ratio (re)** | Ratio of steps spent in exploration mode |  
-| **Entropy Coefficient (ec)** | Weighting factor for entropy in policy learning |  
-| **Exploration Noise (en)** | Noise applied during action exploration in TD3 |  
-| **N-Step TD Update (ns)** | Number of steps for n-step temporal difference updates |  
-| **N-Step Factor (nf)** | Factor for n-step learning |  
-| **Replay Buffer Size (rb)** | Capacity of the replay memory buffer |  
-| **Batch Size (bs)** | Number of samples used in each training batch |  
-| **No. of Hidden Layers (hl)** | Number of hidden layers in the neural network |  
-| **No. of Hidden Units (hu)** | Number of neurons per hidden layer |  
-| **Activation Function (ac)** | Activation function used in the neural network |  
-| **Generalized Advantage Estimation (ge)** | GAE parameter for advantage computation |  
-| **No. of Epochs (ep)** | Number of training epochs |  
-| **Normalize Advantage (na)** | Whether the advantage function is normalized |  
-| **No. of Quantiles (nq)** | Number of quantiles used in distributional RL |  
-| **No. of Dropped Quantiles (dq)** | Number of quantiles dropped in TQC algorithm |  
-| **No. of Critics (cr)** | Number of critic networks in actor-critic methods |  
-| **Soft Update Parameter (ta)** | τ parameter for soft target updates |  
-| **Learning Starts (ls)** | Number of steps before training begins |  
-| **Training Frequency (tf)** | Frequency of model updates |  
-| **Target Update Interval (tu)** | Interval for updating the target network |  
-| **gSDE Exploration (gs)** | Whether generalized State-Dependent Exploration (gSDE) is used |  
-
+| **Iterations (it)** | No. of Iterations (Rollouts) |  
+| **Exploration weight (ex)** | Exploration parameter in UCT |  
+| **Simulation steps (si)** | Maxmimum number of simulation steps (Tree depth + Rollout steps) |  
+| **Maximum depth (md)** | Maximum tree depth |  
 
 ---
 
@@ -380,17 +343,9 @@ The file name and title indicate the applied settings:
 - Python 3.10+
 - Required libraries:
   - `pymodbus`
-  - `opcua`
-  - `PyYAML`
-  - `pywin32`
-  - `cryptography`
-  - `pg8000`
   - `matplotlib`
   - `gymnasium`
   - `pandas`
-  - `stable-baselines3`
-  - `sb3-contrib`
-  - `tensorboard`
   - `tqdm`
   - `numpy`
   - `rich`
@@ -409,13 +364,13 @@ This project is licensed under [MIT License](LICENSE).
 
 ## Citing
 
-If you use RL_PtG in your research, please cite it using the following BibTeX entry:
+If you use **MCTS_PtG** in your research, please cite it using the following BibTeX entry:
 ```BibTeX
 @misc{RL_PtG,
   author = {Markthaler, Simon},
-  title = {RL_PtG: Deep Reinforcement Learning for Power-to-Gas dispatch optimization},
-  year = {2024},
-  url = {https://github.com/SimMarkt/RL_PtG}
+  title = {MCTS_PtG: Monte Carlo Tree Search for Power-to-Gas dispatch optimization},
+  year = {2025},
+  url = {https://github.com/SimMarkt/MCTS_PtG}
 }
 ```
 
@@ -423,42 +378,29 @@ If you use RL_PtG in your research, please cite it using the following BibTeX en
 
 ## References
 
-[1] S. Markthaler, "*Katalytische Direktmethanisierung von Biogas: Demonstration
-in industrieller Umgebung und Betriebsoptimierung mittels Reinforcement
-Learning*", DECHEMA Jahrestreffen der Fachsektion Energie, Chemie
-und Klima (11.-12.03.), Frankfurt/Main, 2024
+[1] S. Markthaler, "*Optimization of Power-to-Gas system operation and dispatch using Deep Reinforcement Learning*", Dissertation (PhD Thesis), Friedrich-Alexander-Universität Erlangen-Nürnberg, 2025 (not yet been published).
 
-[2] M. Kopp, D. Coleman, C. Stiller, K. Scheffer, J. Aichinger, B. Scheppat, "*“Energiepark
+[2] S. Markthaler, "*RL_PtG: Deep Reinforcement Learning for Power-to-Gas dispatch optimization*", 2024, https://github.com/SimMarkt/RL_PtG
+
+[3] M. Kopp, D. Coleman, C. Stiller, K. Scheffer, J. Aichinger, B. Scheppat, "*“Energiepark
 Mainz: Technical and economic analysis of the worldwide largest
 Power-to-Gas plant with PEM electrolysis*", International Journal of Hydrogen Energy,
 42, 2017, 13311–13320
-
-[3] S. Markthaler, "*Optimization of Power-to-Gas operation and dispatch using Deep Reinforcement Learning*", Dissertation (PhD Thesis), Friedrich-Alexander-Universität Erlangen-Nürnberg, 2025 (not yet been published).
 
 [4] Bundesnetzagentur, "*SMARD - Strommarktdaten, Stromhandel und Stromerzeugung in Deutschland*", https://www.smard.de/home (Accessed, 15.08.2024)
 
 [5] Montel AS., "*Montel Online Platform*", https://www.montelnews.com/ (Accessed, 26.07.2023)
 
-[6] V. Mnih, K. Kavukcuoglu, D. Silver, A. A. Rusu, J. Veness, M. G. Bellemare, A. Graves, M. Riedmiller, A. K. Fidjeland, G. Ostrovski, S. Petersen, C. Beattie, A. Sadik, I. Antonoglou, H. King, D. Kumaran, D. Wierstra, S. Legg, D. Hassabis,
-"*Human-level control through deep reinforcement learning*", Nature, 518, 2015, 529–533
-
-[7] V. Mnih, A. P. Badia, M. Mirza, A. Graves, T. P. Lillicrap, T. Harley, D. Silver, K. Kavukcuoglu, "*Asynchronous Methods for Deep Reinforcement Learning*",
-arXiv preprint arXiv:1602.01783, 2016, 1–19
-
-[8] J. Schulman, F. Wolski, P. Dhariwal, A. Radford, O. Klimov, "*Proximal Policy Optimization Algorithms*", arXiv preprint arXiv:1707.06347, 2017, 1–12
-
-[9] S. Fujimoto, H. van Hoof, D. Meger, "*Addressing Function Approximation Error in Actor-Critic Methods*", arXiv preprint arXiv:1802.09477, 2018, 1–15
-
-[10] T. Haarnoja, A. Zhou, K. Hartikainen, G. Tucker, S. Ha, J. Tan, V. Kumar, H. Zhu, A. Gupta, P. Abbeel, S. Levine, "*Soft Actor-Critic Algorithms and Applications*", arXiv preprint arXiv:1812.05905, 2019, 1–17
-
-[11] A. Kuznetsov, P. Shvechikov, A. Grishin, D. Vetrov, "*Controlling Overestimation Bias with Truncated Mixture of Continuous Distributional Quantile Critics*", arXiv preprint arXiv:2005.04269, 2020, 1–17
-
+[6] R. S. Sutton, A. G. Barto, "*Reinforcement Learning: An Introduction*", The MIT Press, Cambridge, Massachusetts, 2018
 
 ---
 
-## Acknowledgments
+## To-Do's:
 
-This project was funded by the German *Federal Ministry for Economic Affairs and Climate Action* within the **Power-to-Biogas**
-project (Project ID: 03KB165). 
+Incorporate:
+- Exploration annealing
+- Rollout policy based on human expert data (Behavorial cloning)
+- Rollout policy based on pre-trained RL policies
+- Incorporate PUCT 
 
 ---
