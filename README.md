@@ -1,8 +1,8 @@
 # MCTS_PtG
 
-The **MCTS_PtG** project provides a framework for the economic optimization of Power-to-Gas (PtG) dispatch using Monte Carlo Tree Search (MCTS). PtG is a technology that enables the chemical energy storage of renewable energy in chemical energy carriers such as hydrogen (H<sub>2</sub>) or methane (CH<sub>4</sub>). **MCTS_PtG** implements *decision-time planning* of PtG operation, based on process data and Day-ahead electricity, natural gas, and emissions spot market data.  
+The **MCTS_PtG** project provides a framework for the economic optimization of Power-to-Gas (PtG) dispatch using Monte Carlo Tree Search (MCTS). PtG is a technology that enables the chemical energy storage of renewable energy in chemical energy carriers such as hydrogen (H<sub>2</sub>) or methane (CH<sub>4</sub>). **MCTS_PtG** implements *decision-time planning* of PtG operation, using process data along with day-ahead electricity, natural gas, and emissions spot market data.  
 
-This repository contains the source code for the applied MCTS algorithm and a data-driven process model of a real-world PtG plant. 
+This repository provides the source code for the MCTS algorithm and a data-driven process model of a real-world PtG plant.
 
 ![MCTS_PtG_int](plots/MCTS_PtG_int.png)
 
@@ -23,7 +23,7 @@ This repository contains the source code for the applied MCTS algorithm and a da
 
 ## Overview
 
-**MCTS_PtG** is written in Python and includes a data-driven process model of a real-world PtG plant in **PtGEnv** (adapted from [1, 2]). This section provides an an overview on the application and details the MCTS algorithm used. For more information on **PtGEnv**, please refer to [1, 2].
+**MCTS_PtG** is written in Python and includes a data-driven process model of a real-world PtG plant in **PtGEnv** (adapted from [1, 2]). This section This section gives an overview of the application and details the MCTS algorithm used. For more information about **PtGEnv**, please refer to [1, 2].
 
 ### Application
 
@@ -51,11 +51,11 @@ The **MCTS_PtG** framework models the complete PtG process, including PEM electr
 
 *Figure 2: Optimization framework for Power-to-Gas dispatch using Monte Carlo Tree Search (MCTS) and the PtGEnv environment including the different business cases.*
 
-### MCTS Algorithms
+### MCTS Algorithm
 
-The MCTS algorithm is a rollout-based algorithm for decision-time planning. Decision-time planning refers to a planning approach in which computation is performed at the moment a decision needs to be made, rather than building a complete plan in advance [6]. 
+The MCTS algorithm is a rollout-based approach for decision-time planning. In this context, decision-time planning means that computations are performed at the moment a decision is needed, rather than constructing a complete plan in advance [6].
 
-MCTS proceeds through four main steps in a loop (Fig. 3), gradually building a search tree to guide decision-making. The loop is repeated for a set number of iterations:
+MCTS operates in a loop consisting of four main steps (see Fig. 3), incrementally building a search tree to guide decision-making. The loop runs for a predefined number of iterations:
 
 1. **Selection:**
 Starting from the root node, MCTS recursively selects child nodes according to a tree/selection policy until a leaf node is reached.
@@ -83,11 +83,11 @@ MCTS propagates the simulation result back up the tree, updating statistics (lik
 
 ![MCTS_Alg](plots/MCTS_Alg.png)
 
-*Figure 3: Selection, Expansion, Simulation, and Backpropagation within the Monte Carlo Tree Search algorithm.*
+*Figure 3: The four phases of the Monte Carlo Tree Search algorithm—Selection, Expansion, Simulation, and Backpropagation.*
 
-**Note:** Since the present rollout policy is deterministic and the memory access within **PtGEnv** is the main performance bottleneck, **MCTS_PtG** omits parallelization of rollouts and fast compiling with JAX or NUMBA.
+**Note:** Due to the deterministic nature of the current rollout policy and the memory access bottleneck in **PtGEnv**, **MCTS_PtG** does not implement rollout parallelization or high-performance compilation using JAX or NUMBA.
 
-**Note:** For Selection and Expansion, **MCTS_PtG** uses action masking to include only the possible actions for the PtG plant. These actions are determined by the programmable logic controller (PLC) of the real-world plant and depend on its operation state. The following table illustrates the possible actions:
+**Note:** During the Selection and Expansion steps, **MCTS_PtG** uses action masking to ensure only valid actions are considered. These valid actions are defined by the programmable logic controller (PLC) of the real-world PtG plant and depend on its operational state [1]. The following table outlines the possible actions::
 
 | Operation State  | Startup | Partial Load | Full Load | Cooldown | Standby |
 |----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
@@ -314,18 +314,6 @@ After an MCTS run, the results are visualized and stored in `plots/` (Fig. 4).
 
 The file name and title indicate the applied settings:  
 
-    print(f"    > Time step size (action frequency) (_ts) :\t {EnvConfig.sim_step} seconds\n")
-    str_id += "_ts" + str(EnvConfig.sim_step)
-    print("MCTS settings...")
-    print(f"    > No. of Iterations (_it) :\t\t\t {mcts.iterations}")
-    str_id += "_it" + str(mcts.iterations)
-    print(f"    > Exploration parameter (_ex) :\t\t {mcts.exploration_weight}")
-    str_id += "_ex" + str(mcts.exploration_weight)
-    print(f"    > Simulation steps (_si) :\t\t\t {mcts.total_steps}")
-    str_id += "_si" + str(mcts.total_steps)
-    print(f"    > Maximum depth (_md) :\t\t\t {mcts.maximum_depth}\n")
-    str_id += "_md" + str(mcts.maximum_depth)
-
 | Parameter | Description |  
 |-----------|------------|  
 | **Business Scenario (BS)** | Scenario defining the operational and economic conditions |  
@@ -333,7 +321,7 @@ The file name and title indicate the applied settings:
 | **Time-Step Size (ts)** | Duration of a single time step in the simulation |  
 | **Iterations (it)** | No. of Iterations (Rollouts) |  
 | **Exploration weight (ex)** | Exploration parameter in UCT |  
-| **Simulation steps (si)** | Maxmimum number of simulation steps (Tree depth + Rollout steps) |  
+| **Total steps (si)** | Maxmimum number of steps (Tree depth + Rollout steps) |  
 | **Maximum depth (md)** | Maximum tree depth |  
 
 ---
@@ -342,7 +330,6 @@ The file name and title indicate the applied settings:
 
 - Python 3.10+
 - Required libraries:
-  - `pymodbus`
   - `matplotlib`
   - `gymnasium`
   - `pandas`
@@ -366,7 +353,7 @@ This project is licensed under [MIT License](LICENSE).
 
 If you use **MCTS_PtG** in your research, please cite it using the following BibTeX entry:
 ```BibTeX
-@misc{RL_PtG,
+@misc{MCTS_PtG,
   author = {Markthaler, Simon},
   title = {MCTS_PtG: Monte Carlo Tree Search for Power-to-Gas dispatch optimization},
   year = {2025},
@@ -399,8 +386,8 @@ Power-to-Gas plant with PEM electrolysis*", International Journal of Hydrogen En
 
 Incorporate:
 - Exploration annealing
-- Rollout policy based on human expert data (Behavorial cloning)
+- Rollout policy based on human expert data (Behavioral cloning)
 - Rollout policy based on pre-trained RL policies
-- Incorporate PUCT 
+- PUCT 
 
 ---
