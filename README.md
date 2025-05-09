@@ -62,12 +62,12 @@ Starting from the root node, MCTS recursively selects child nodes according to a
 The tree policy balances exploration (trying less-visited nodes) and exploitation (choosing high-reward nodes).
 Typical policies are based on *Upper Confidence Bound for Trees* (UCT).
 
-`(Q / N) + c * sqrt(ln(N_parent) / N)`
+<pre> ``` aₜ = argmaxₐ [ Q(s, a) / N(s, a) + c * sqrt(ln(N(s)) / N(s, a)) ] ``` </pre>
 
-Q: Total reward from simulations for this child.
-N: Number of times this child has been visited.
-N_parent: Number of times the parent node has been visited.
-c: Exploration constant (commonly √2 or tuned per application).
+Q(s,a): Total reward from simulations for this child.
+N(s,a): Number of times this child has been visited.
+N(s): Number of times the parent node has been visited.
+c: Exploration constant.
 
 2. **Expansion:**
 If the selected node is not terminal and has untried actions, **MCTS_PtG** expands the tree by creating one or more child nodes for those actions.
