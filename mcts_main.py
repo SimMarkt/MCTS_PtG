@@ -84,12 +84,11 @@ def main():
     stats_dict_test = {}
     pot_reward = 0
 
-    timesteps = 100
-    store_interval = 50
+    timesteps = 2900
 
     for i in tqdm(range(timesteps), desc='---Apply MCTS planning on the test environment:'):
         
-        if i % store_interval == 0 and i != 0: mcts.store_tree()  # Store the tree structure every store_interval steps
+        if i % mcts.store_interval == 0 and i != 0: mcts.store_tree(i)  # Store the tree structure every store_interval steps
 
         action = mcts.search(env_test_post, Meth_State=obs['METH_STATUS'], init_el_price=obs['Elec_Price'][0], init_pot_reward=pot_reward)  # Perform MCTS search to get the best action
         
