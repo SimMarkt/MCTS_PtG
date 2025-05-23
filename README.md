@@ -308,10 +308,6 @@ Please note that decision-time planning with MCTS can be resource-intensive, esp
 
 After an MCTS run, the results are visualized and stored in `plots/` (Fig. 4).  
 
-![Results](plots/RL_PtG_train_BS2_OP2_sfmod_ep37_ts600_PPO_al5e-05_ga0.973_ec1e-05_nf21_bs203_hl2_hu358_acReLU_ge0.8002_ep13_naFalse_gsFalse_rs3654_plot.png)
-
-*Figure 4: MCTS performance including energy market data, PtG process state, methane production, reward, and cumulative reward.*
-
 The file name and title indicate the applied settings:  
 
 | Parameter | Description |  
@@ -379,15 +375,5 @@ Power-to-Gas plant with PEM electrolysis*", International Journal of Hydrogen En
 [5] Montel AS., "*Montel Online Platform*", https://www.montelnews.com/ (Accessed, 26.07.2023)
 
 [6] R. S. Sutton, A. G. Barto, "*Reinforcement Learning: An Introduction*", The MIT Press, Cambridge, Massachusetts, 2018
-
----
-
-## To-Do's:
-
-Incorporate:
-- Exploration annealing
-- Rollout policy based on human expert data (Behavioral cloning)
-- Rollout policy based on pre-trained RL policies
-- PUCT 
 
 ---
